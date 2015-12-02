@@ -16,8 +16,13 @@
 
 package dbseer.middleware;
 
+import com.esotericsoftware.minlog.Log;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+
+import java.util.ArrayList;
 
 /**
  * Created by Dong Young Yoon on 12/1/15.
@@ -26,21 +31,83 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
  */
 public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 {
+	private MiddlewareServer server;
+
+	public MiddlewareServerHandler(MiddlewareServer server)
+	{
+		this.server = server;
+	}
+
 	@Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception
 	{
 		super.channelActive(ctx);
+		Log.debug("Child handler channel active");
 	}
 
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception
 	{
 		super.channelRead(ctx, msg);
+		Log.debug("Child handler channel read");
+
+		ByteBuf b = (ByteBuf) msg;
+		int header = b.readInt();
+		if (header == MiddlewareConstants.PACKET_START_MONITORING)
+		{
+			boolean isStarted;
+			isStarted = server.startMonitoring();
+			ByteBuf ans = Unpooled.buffer();
+			if (isStarted)
+			{
+				ans.writeInt(MiddlewareConstants.PACKET_START_MONITORING_SUCCESS);
+			}
+			else
+			{
+				ans.writeInt(MiddlewareConstants.PACKET_START_MONITORING_FAILURE);
+			}
+			ctx.writeAndFlush(ans);
+			ans.release();
+		}
+		else if (header == MiddlewareConstants.PACKET_REQUEST_DB_LOG)
+		{
+			String log = "";
+			ArrayList<String> logs = new ArrayList<String>();
+			server.getDbLogQueue().drainTo(logs);
+			for (String aLog : logs)
+			{
+				log += aLog;
+			}
+			ByteBuf ans = Unpooled.buffer();
+			ans.writeInt(MiddlewareConstants.PACKET_DB_LOG);
+			ans.writeInt(log.getBytes().length);
+			ans.writeBytes(log.getBytes());
+			ctx.writeAndFlush(ans);
+			ans.release();
+		}
+		else if (header == MiddlewareConstants.PACKET_REQUEST_SYS_LOG)
+		{
+			String log = "";
+			ArrayList<String> logs = new ArrayList<String>();
+			server.getSysLogQueue().drainTo(logs);
+			for (String aLog : logs)
+			{
+				log += aLog;
+			}
+			ByteBuf ans = Unpooled.buffer();
+			ans.writeInt(MiddlewareConstants.PACKET_SYS_LOG);
+			ans.writeInt(log.getBytes().length);
+			ans.writeBytes(log.getBytes());
+			ctx.writeAndFlush(ans);
+			ans.release();
+		}
+		b.release();
 	}
 
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception
 	{
 		super.exceptionCaught(ctx, cause);
+		Log.debug("Child handler exception caught");
 	}
 }

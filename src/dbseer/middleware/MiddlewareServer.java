@@ -22,12 +22,21 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.timeout.IdleStateHandler;
 import org.apache.commons.cli.*;
+import org.apache.commons.lang3.StringUtils;
 import org.ini4j.Ini;
 
 import java.io.File;
 import java.io.FileReader;
 import java.net.InetSocketAddress;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created by Dong Young Yoon on 11/27/15.
@@ -39,21 +48,35 @@ public class MiddlewareServer
 	private int port;
 	private String dbLogPath;
 	private String sysLogPath;
-	private String dbId;
+	private String dbUser;
 	private String dbPassword;
+	private String dbHost;
+	private String dbPort;
+	private String testDB;
 
 	private boolean hasConnected;
 	private String remoteHostString;
 
-	public MiddlewareServer(int port, String dbLogPath, String sysLogPath, String dbId, String dbPassword)
+	private File dbLogFile = null;
+	private File sysLogFile = null;
+	private Process dstatProcess = null;
+	private ExecutorService tailerExecutor = null;
+	private LogTailer dbLogTailer = null;
+	private LogTailer sysLogTailer = null;
+
+	private ArrayBlockingQueue<String> dbLogQueue;
+	private ArrayBlockingQueue<String> sysLogQueue;
+
+	public MiddlewareServer(int port, String dbLogPath, String sysLogPath, String dbUser, String dbPassword, String dbHost, String dbPort, String testDB)
 	{
 		this.port = port;
 		this.dbLogPath = dbLogPath;
 		this.sysLogPath = sysLogPath;
-		this.dbId = dbId;
+		this.dbUser = dbUser;
 		this.dbPassword = dbPassword;
-		this.hasConnected = false;
-		this.remoteHostString = "";
+		this.dbHost = dbHost;
+		this.dbPort = dbPort;
+		this.testDB = testDB;
 	}
 
 	public void run() throws Exception
@@ -62,17 +85,23 @@ public class MiddlewareServer
 		Log.info(String.format("Listening port = %d", port));
 		Log.info(String.format("DB log path = %s", dbLogPath));
 		Log.info(String.format("System log path = %s", sysLogPath));
-		Log.info(String.format("DB ID = %s", dbId));
+		Log.info(String.format("DB Host = %s", dbHost));
+		Log.info(String.format("DB Port = %s", dbPort));
+		Log.info(String.format("DB User = %s", dbUser));
 		Log.info(String.format("DB PW = %s", dbPassword));
+		Log.info(String.format("Test DB = %s", testDB));
 
-		// Use tailer to collect log data.
-
-
+		// test MySQL/MariaDB connection using JDBC before we start anything.
+		if (!testMySQLConnection())
+		{
+			throw new Exception("Unable to connect to the MySQL server with the given credential.");
+		}
 
 		// let's start accepting connections.
 		EventLoopGroup bossGroup = new NioEventLoopGroup();
 		EventLoopGroup workerGroup = new NioEventLoopGroup();
 
+		final MiddlewareServer server = this;
 		try
 		{
 			ServerBootstrap b = new ServerBootstrap();
@@ -80,16 +109,20 @@ public class MiddlewareServer
 					.channel(NioServerSocketChannel.class)
 					.option(ChannelOption.SO_BACKLOG, 128)
 					.childOption(ChannelOption.SO_KEEPALIVE, true)
-					.handler(new MiddlewareServerConnectionHandler(this))
+					.handler(new MiddlewareServerConnectionHandler(server))
 					.childHandler(new ChannelInitializer<SocketChannel>()
 					{
 						@Override
 						protected void initChannel(SocketChannel ch) throws Exception
 						{
 							ChannelPipeline p = ch.pipeline();
-							p.addLast(new MiddlewareServerHandler());
+							p.addLast(new IdleStateHandler(10, 0, 0));
+							p.addLast(new MiddlewareServerHandler(server));
 						}
 					});
+
+
+			Log.info("Middleware is now accepting connections.");
 
 			// bind and start accepting connections.
 			ChannelFuture cf = b.bind(port).sync();
@@ -105,7 +138,33 @@ public class MiddlewareServer
 		{
 			bossGroup.shutdownGracefully();
 			workerGroup.shutdownGracefully();
+			tailerExecutor.shutdown();
 		}
+	}
+
+	public boolean startMonitoring()
+	{
+		// initialize queues
+		dbLogQueue = new ArrayBlockingQueue<String>(MiddlewareConstants.QUEUE_SIZE);
+		sysLogQueue = new ArrayBlockingQueue<String>(MiddlewareConstants.QUEUE_SIZE);
+
+		try
+		{
+			// start dstat.
+			runDstat();
+
+			// sleep for 1.5 sec
+			Thread.sleep(1500);
+
+			// start tailer to collect log data.
+			runTailer();
+		}
+		catch (Exception e)
+		{
+			Log.error("Exception while starting monitoring: " + e.getMessage());
+			return false;
+		}
+		return true;
 	}
 
 	/*
@@ -121,27 +180,107 @@ public class MiddlewareServer
 		hasConnected = true;
 	}
 
+	private void runDstat() throws Exception
+	{
+		if (dstatProcess != null)
+		{
+			dstatProcess.destroy();
+		}
+
+		String[] cmd = {"/bin/bash", "./rs-sysmon2/monitor.sh"};
+		ProcessBuilder pb = new ProcessBuilder(cmd);
+		Map<String, String> env = pb.environment();
+		env.put("DSTAT_MYSQL_USER", dbUser);
+		env.put("DSTAT_MYSQL_PWD", dbPassword);
+		env.put("DSTAT_MYSQL_HOST", dbHost);
+		env.put("DSTAT_MYSQL_PORT", dbPort);
+		env.put("DSTAT_OUTPUT_PATH", sysLogPath);
+		dstatProcess = pb.start();
+	}
+
+	private void runTailer() throws Exception
+	{
+		dbLogFile = new File(dbLogPath);
+		sysLogFile = new File(sysLogPath);
+
+		LogTailerListener dbLogListener = new LogTailerListener(dbLogQueue);
+		LogTailerListener sysLogListener = new LogTailerListener(sysLogQueue);
+
+		// starts from the last line for db log.
+		dbLogTailer = new LogTailer(dbLogFile, dbLogListener, 1000, -1);
+		// starts from the beginning for dstat.
+		sysLogTailer = new LogTailer(sysLogFile, sysLogListener, 1000, 0);
+
+		tailerExecutor = Executors.newFixedThreadPool(3); // 1 more just in case
+		tailerExecutor.submit(dbLogTailer);
+		tailerExecutor.submit(sysLogTailer);
+	}
+
+	private boolean testMySQLConnection()
+	{
+		String url = String.format("jdbc:mysql://%s:%s/%s", dbHost, dbPort, testDB);
+		boolean canConnect = false;
+		try
+		{
+			Class.forName("com.mysql.jdbc.Driver").newInstance();
+			Connection conn = (Connection) DriverManager.getConnection(url, dbUser, dbPassword);
+
+			// connection was successful.
+			conn.close();
+			canConnect = true;
+		}
+		catch (IllegalAccessException e)
+		{
+			e.printStackTrace();
+		}
+		catch (InstantiationException e)
+		{
+			e.printStackTrace();
+		}
+		catch (ClassNotFoundException e)
+		{
+			e.printStackTrace();
+		}
+		catch (SQLException e)
+		{
+			Log.debug("Caught a SQLException while testing connection to the server.");
+		}
+
+		return canConnect;
+	}
+
+	public ArrayBlockingQueue<String> getDbLogQueue()
+	{
+		return dbLogQueue;
+	}
+
+	public ArrayBlockingQueue<String> getSysLogQueue()
+	{
+		return sysLogQueue;
+	}
+
 	public static void main(String[] args)
 	{
 		// set up logger
-		Log.set(Log.LEVEL_DEBUG);
+		Log.set(Log.LEVEL_DEBUG); // DEBUG for now.
 
 		String configPath = "./middleware.cnf";
 		// handle command-line options with commons CLI
 		CommandLineParser clParser = new DefaultParser();
 		Options options = new Options();
 
-		Option configOption = OptionBuilder.withArgName("config")
+		Option configOption = Option.builder("c")
 				.hasArg()
-				.withArgName("FILE")
-				.isRequired(false)
-				.withDescription("use this configuration file (DEFAULT: middleware.cnf)").create("c");
+				.argName("FILE")
+				.required(false)
+				.desc("use this configuration file (DEFAULT: middleware.cnf)")
+				.build();
 
-		Option helpOption = OptionBuilder.withArgName("help")
-				.withLongOpt("help")
-				.isRequired(false)
-				.withDescription("print this message")
-				.create("h");
+		Option helpOption = Option.builder("h")
+				.longOpt("help")
+				.required(false)
+				.desc("print this message")
+				.build();
 
 		options.addOption(configOption);
 		options.addOption(helpOption);
@@ -152,8 +291,14 @@ public class MiddlewareServer
 		{
 			CommandLine line = clParser.parse(options, args);
 			int port = 3555; // default port
-			String dbLogPath, sysLogPath, dbId, dbPassword;
+			String dbLogPath, sysLogPath, dbUser, dbPassword, dbHost, dbPort, testDB;
+			testDB = "test"; // default test DB
 
+			if (line.hasOption("h"))
+			{
+				formatter.printHelp("MiddlewareServer", options, true);
+				return;
+			}
 			if (line.hasOption("c"))
 			{
 				configPath = line.getOptionValue("c");
@@ -178,6 +323,11 @@ public class MiddlewareServer
 			{
 				port = Integer.parseInt(portStr);
 			}
+			String testDBStr = section.get("testDB");
+			if (testDBStr != null)
+			{
+				testDB = testDBStr;
+			}
 			dbLogPath = section.get("dblog_path");
 			if (dbLogPath == null)
 			{
@@ -188,10 +338,24 @@ public class MiddlewareServer
 			{
 				throw new Exception("'syslog_path' is missing in the configuration file.");
 			}
-			dbId = section.get("db_id");
-			if (dbId == null)
+			dbHost = section.get("db_host");
+			if (dbHost == null)
 			{
-				throw new Exception("'db_id' is missing in the configuration file.");
+				throw new Exception("'db_host' is missing in the configuration file.");
+			}
+			dbPort = section.get("db_port");
+			if (dbPort == null)
+			{
+				throw new Exception("'db_port' is missing in the configuration file.");
+			}
+			if (!StringUtils.isNumeric(dbPort))
+			{
+				throw new Exception("'db_port' must be a number.");
+			}
+			dbUser = section.get("db_user");
+			if (dbUser == null)
+			{
+				throw new Exception("'db_user' is missing in the configuration file.");
 			}
 			dbPassword = section.get("db_pw");
 			if (dbPassword == null)
@@ -199,7 +363,7 @@ public class MiddlewareServer
 				throw new Exception("'db_pw' is missing in the configuration file.");
 			}
 
-			MiddlewareServer server = new MiddlewareServer(port, dbLogPath, sysLogPath, dbId, dbPassword);
+			MiddlewareServer server = new MiddlewareServer(port, dbLogPath, sysLogPath, dbUser, dbPassword, dbHost, dbPort, testDB);
 			server.run();
 		}
 		catch (ParseException e)
@@ -211,8 +375,6 @@ public class MiddlewareServer
 		catch (Exception e)
 		{
 			System.out.println("ERROR: " + e.getMessage());
-			e.printStackTrace();
 		}
 	}
 }
-

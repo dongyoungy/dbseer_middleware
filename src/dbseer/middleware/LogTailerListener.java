@@ -18,57 +18,27 @@ package dbseer.middleware;
 
 import org.apache.commons.io.input.TailerListenerAdapter;
 
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 /**
- * Created by dyoon on 9/24/15.
+ * Created by Dong Young Yoon on 11/30/2015
  */
 public class LogTailerListener extends TailerListenerAdapter
 {
-	private int type;
-	private boolean resumed;
-	private long offset;
-	private boolean run = true;
+	private ArrayBlockingQueue<String> queue;
 
-	public LogTailerListener(int type, boolean resumed)
+	public LogTailerListener(ArrayBlockingQueue<String> queue)
 	{
-		this.type = type;
-		this.resumed = resumed;
-		this.offset = 0;
+		this.queue = queue;
 	}
 
 	public void handle(String line, long offset)
 	{
-		// if it is resumed then no need to send dstat headers.
-		if (resumed)
+		if (!queue.offer(line))
 		{
-			if (line.contains("Dstat") || line.contains("Author") || line.contains("Host")
-					|| line.contains("Cmdline") || line.contains("epoch") || line.isEmpty())
-			{
-				return;
-			}
+			queue.poll();
+			queue.offer(line);
 		}
-
-		//while (!queue.offer(log))
-		{
-			try
-			{
-				Thread.sleep(100);
-			}
-			catch (InterruptedException e)
-			{
-				if (this.run)
-				{
-					e.printStackTrace();
-				}
-			}
-//			if (!this.run) break;
-		}
-		this.offset = offset;
-	}
-
-	public void stop()
-	{
-		this.run = false;
 	}
 }

@@ -225,12 +225,5 @@ public class LogTailer implements Runnable
 		reader.seek(rePos); // Ensure we can re-read if necessary
 		return rePos;
 	}
-	/**
-	 * Allows the tailer to complete its current loop and return.
-	 */
-	public void stop() {
-		this.run = false;
-		this.listener.stop();
-	}
 }
 
