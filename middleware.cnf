@@ -1,0 +1,6 @@
+[dbseer_middleware]
+listen_port=3555
+dblog_path=db.log
+syslog_path=sys.log
+db_id=root
+db_pw=
