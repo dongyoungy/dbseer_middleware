@@ -177,7 +177,7 @@ public class MiddlewareClient
 				.desc("file to print database log")
 				.build();
 
-		Option helpOption = Option.builder("h")
+		Option helpOption = Option.builder("?")
 				.longOpt("help")
 				.required(false)
 				.desc("print this message")
