@@ -41,6 +41,6 @@ public class MiddlewareServerConnectionHandler extends ChannelInboundHandlerAdap
 
 		InetSocketAddress remoteAddress = (InetSocketAddress)ctx.channel().remoteAddress();
 		server.setRemote(remoteAddress);
-		Log.debug(String.format("Client with hostname:%s has connected.", remoteAddress.toString()));
+		Log.debug(String.format("Client with hostname: '%s' has connected.", remoteAddress.toString()));
 	}
 }

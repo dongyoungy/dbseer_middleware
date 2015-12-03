@@ -101,6 +101,10 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			ctx.writeAndFlush(ans);
 			ans.release();
 		}
+		else
+		{
+			Log.error("Unknown packet received: " + b.toString());
+		}
 		b.release();
 	}
 

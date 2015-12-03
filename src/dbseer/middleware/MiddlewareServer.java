@@ -167,6 +167,17 @@ public class MiddlewareServer
 		return true;
 	}
 
+	public boolean stopMonitoring()
+	{
+		// stop dstat.
+		dstatProcess.destroy();
+
+		// stop tailers.
+		tailerExecutor.shutdown();
+
+		return true;
+	}
+
 	/*
 	 * Store the remote address. Middleware only allows a single connection.
 	 */
@@ -207,9 +218,9 @@ public class MiddlewareServer
 		LogTailerListener sysLogListener = new LogTailerListener(sysLogQueue);
 
 		// starts from the last line for db log.
-		dbLogTailer = new LogTailer(dbLogFile, dbLogListener, 1000, -1);
+		dbLogTailer = new LogTailer(dbLogFile, dbLogListener, 250, -1);
 		// starts from the beginning for dstat.
-		sysLogTailer = new LogTailer(sysLogFile, sysLogListener, 1000, 0);
+		sysLogTailer = new LogTailer(sysLogFile, sysLogListener, 250, 0);
 
 		tailerExecutor = Executors.newFixedThreadPool(3); // 1 more just in case
 		tailerExecutor.submit(dbLogTailer);
@@ -370,11 +381,11 @@ public class MiddlewareServer
 		{
 			//System.out.println("USAGE: MiddlewareServer -d <dblogfile> -s <syslogfile>");
 			formatter.printHelp("MiddlewareServer", options, true);
-			System.out.println("ERROR: " + e.getMessage());
+			Log.error("ERROR: " + e.getMessage());
 		}
 		catch (Exception e)
 		{
-			System.out.println("ERROR: " + e.getMessage());
+			Log.error("ERROR: " + e.getMessage());
 		}
 	}
 }
