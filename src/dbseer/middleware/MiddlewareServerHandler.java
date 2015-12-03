@@ -59,10 +59,10 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception
 	{
-		Log.debug("Child handler channel read");
-
 		ByteBuf b = (ByteBuf) msg;
 		int header = b.readInt();
+
+		Log.debug("Child handler channel read header = " + header);
 		if (header == MiddlewareConstants.PACKET_START_MONITORING)
 		{
 			boolean isStarted;
