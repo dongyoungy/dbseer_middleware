@@ -61,6 +61,7 @@ public class MiddlewareClientLogRequester implements Runnable
 				break;
 			}
 
+			Log.debug("Requester sending log requests.");
 			channel.writeAndFlush(sysLogRequest);
 			channel.writeAndFlush(dbLogRequest);
 		}

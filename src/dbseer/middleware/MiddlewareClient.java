@@ -100,6 +100,8 @@ public class MiddlewareClient
 			channel = f.channel();
 			Log.debug("Connected to the middleware.");
 
+			startMonitoring();
+
 			channel.closeFuture().sync();
 		}
 		finally

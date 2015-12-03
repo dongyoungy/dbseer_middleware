@@ -44,22 +44,26 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception
 	{
 		super.channelRead(ctx, msg);
+		Log.debug("channel read");
 
 		ByteBuf b = (ByteBuf) msg;
 
 		int header = b.readInt();
 		if (header == MiddlewareConstants.PACKET_START_MONITORING_SUCCESS)
 		{
+			Log.debug("start monitoring succeeded.");
 			// spawn log requester
 			client.startRequester();
 		}
 		else if (header == MiddlewareConstants.PACKET_START_MONITORING_FAILURE)
 		{
+			Log.debug("start monitoring failed.");
 			// retry monitoring
 			client.startMonitoring();
 		}
 		else if (header == MiddlewareConstants.PACKET_DB_LOG)
 		{
+			Log.debug("received db log.");
 			// write db log.
 			int length = b.readInt();
 			String log = b.toString(b.readerIndex(), length, Charset.defaultCharset());
@@ -68,6 +72,7 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 		}
 		else if (header == MiddlewareConstants.PACKET_SYS_LOG)
 		{
+			Log.debug("received sys log.");
 			// write sys log.
 			int length = b.readInt();
 			String log = b.toString(b.readerIndex(), length, Charset.defaultCharset());
