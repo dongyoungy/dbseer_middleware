@@ -200,6 +200,12 @@ public class MiddlewareServer
 
 		String[] cmd = {"/bin/bash", "./rs-sysmon2/monitor.sh"};
 		ProcessBuilder pb = new ProcessBuilder(cmd);
+		File log = new File("dstat_log");
+
+		// temp
+		pb.redirectErrorStream(true);
+		pb.redirectOutput(ProcessBuilder.Redirect.appendTo(log));
+
 		Map<String, String> env = pb.environment();
 		env.put("DSTAT_MYSQL_USER", dbUser);
 		env.put("DSTAT_MYSQL_PWD", dbPassword);
