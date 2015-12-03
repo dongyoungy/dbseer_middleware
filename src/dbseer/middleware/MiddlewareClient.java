@@ -92,7 +92,7 @@ public class MiddlewareClient
 						{
 							ChannelPipeline p = ch.pipeline();
 							p.addLast(new IdleStateHandler(10, 0, 0));
-							p.addLast(new MiddlewareClientHandler(client, sysLogWriter, dbLogWriter));
+							p.addLast(new MiddlewarePacketDecoder(),new MiddlewareClientHandler(client, sysLogWriter, dbLogWriter));
 						}
 					});
 

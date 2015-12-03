@@ -76,6 +76,7 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			{
 				ans.writeInt(MiddlewareConstants.PACKET_START_MONITORING_FAILURE);
 			}
+			ans.writeInt(0);
 			ctx.writeAndFlush(ans);
 //			ans.release();
 		}

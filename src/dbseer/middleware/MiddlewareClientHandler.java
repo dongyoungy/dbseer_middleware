@@ -45,9 +45,9 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 	{
 		Log.debug("channel read");
 
-		ByteBuf b = (ByteBuf) msg;
+		MiddlewarePacket packet = (MiddlewarePacket) msg;
 
-		int header = b.readInt();
+		int header = packet.header;
 		if (header == MiddlewareConstants.PACKET_START_MONITORING_SUCCESS)
 		{
 			Log.debug("start monitoring succeeded.");
@@ -64,26 +64,20 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 		{
 			Log.debug("received db log.");
 			// write db log.
-			int length = b.readInt();
-			String log = b.toString(b.readerIndex(), length, Charset.defaultCharset());
-			dbLogWriter.write(log);
+			dbLogWriter.write(packet.log);
 			dbLogWriter.flush();
 		}
 		else if (header == MiddlewareConstants.PACKET_SYS_LOG)
 		{
 			Log.debug("received sys log.");
 			// write sys log.
-			int length = b.readInt();
-			Log.debug("sys log length = " + length);
-			String log = b.toString(b.readerIndex(), length, Charset.defaultCharset());
-			sysLogWriter.write(log);
+			sysLogWriter.write(packet.log);
 			sysLogWriter.flush();
 		}
 		else
 		{
-			Log.error("Unknown packet received: " + b.toString());
+			Log.error("Unknown packet received: " + packet.header);
 		}
-		b.release();
 	}
 
 	@Override
