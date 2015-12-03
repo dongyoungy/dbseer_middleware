@@ -16,6 +16,7 @@
 
 package dbseer.middleware;
 
+import com.esotericsoftware.minlog.Log;
 import org.apache.commons.io.input.TailerListenerAdapter;
 
 import java.util.concurrent.ArrayBlockingQueue;
@@ -35,6 +36,7 @@ public class LogTailerListener extends TailerListenerAdapter
 
 	public void handle(String line, long offset)
 	{
+		Log.debug("tailer handling a line.");
 		if (!queue.offer(line))
 		{
 			queue.poll();

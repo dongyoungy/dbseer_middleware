@@ -94,6 +94,7 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			ans.writeInt(log.getBytes().length);
 			ans.writeBytes(log.getBytes());
 			ctx.writeAndFlush(ans);
+			Log.debug("db log sent");
 //			ans.release();
 		}
 		else if (header == MiddlewareConstants.PACKET_REQUEST_SYS_LOG)
@@ -110,6 +111,7 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			ans.writeInt(log.getBytes().length);
 			ans.writeBytes(log.getBytes());
 			ctx.writeAndFlush(ans);
+			Log.debug("sys log sent");
 //			ans.release();
 		}
 		else
