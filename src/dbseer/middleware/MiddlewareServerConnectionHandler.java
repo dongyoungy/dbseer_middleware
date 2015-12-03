@@ -38,9 +38,5 @@ public class MiddlewareServerConnectionHandler extends ChannelInboundHandlerAdap
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception
 	{
 		super.channelRead(ctx, msg);
-
-		InetSocketAddress remoteAddress = (InetSocketAddress)ctx.channel().remoteAddress();
-		server.setRemote(remoteAddress);
-		Log.debug(String.format("Client with hostname: '%s' has connected.", remoteAddress.toString()));
 	}
 }

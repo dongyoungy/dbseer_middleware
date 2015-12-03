@@ -22,6 +22,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 
 /**
@@ -43,6 +44,16 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 	{
 		super.channelActive(ctx);
 		Log.debug("Child handler channel active");
+		InetSocketAddress address = (InetSocketAddress) ctx.channel().remoteAddress();
+		if (address != null)
+		{
+			server.setRemote(address);
+			Log.debug("channel active with: " + address.getHostString());
+		}
+		else
+		{
+			Log.debug("channel active but address is null.");
+		}
 	}
 
 	@Override

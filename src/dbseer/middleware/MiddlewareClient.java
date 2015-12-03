@@ -20,10 +20,7 @@ import com.esotericsoftware.minlog.Log;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -99,14 +96,11 @@ public class MiddlewareClient
 						}
 					});
 
-			channel = b.connect(host, port).sync().channel();
+			ChannelFuture f = b.connect(host, port).sync();
+			channel = f.channel();
 			Log.debug("Connected to the middleware.");
 
-			// simply sleep?
-			while (true)
-			{
-				Thread.sleep(250);
-			}
+			channel.closeFuture().sync();
 		}
 		finally
 		{
