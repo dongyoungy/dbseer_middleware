@@ -213,6 +213,11 @@ public class MiddlewareServer
 		env.put("DSTAT_MYSQL_PORT", dbPort);
 		env.put("DSTAT_OUTPUT_PATH", sysLogPath);
 		dstatProcess = pb.start();
+		Log.debug("dstat started.");
+		if (!dstatProcess.isAlive())
+		{
+			Log.debug("dstat NOT alive.");
+		}
 	}
 
 	private void runTailer() throws Exception

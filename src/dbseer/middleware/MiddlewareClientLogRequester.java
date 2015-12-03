@@ -52,6 +52,7 @@ public class MiddlewareClientLogRequester implements Runnable
 				Thread.sleep(1000 * DELAY);
 				if (Thread.currentThread().isInterrupted())
 				{
+					Log.error(this.getClass().getCanonicalName(), "interrupted.");
 					break;
 				}
 			}
