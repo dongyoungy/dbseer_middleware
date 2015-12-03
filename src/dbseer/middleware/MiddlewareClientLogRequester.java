@@ -65,8 +65,5 @@ public class MiddlewareClientLogRequester implements Runnable
 			channel.writeAndFlush(sysLogRequest);
 			channel.writeAndFlush(dbLogRequest);
 		}
-
-		sysLogRequest.release();
-		dbLogRequest.release();
 	}
 }

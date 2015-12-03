@@ -77,7 +77,7 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 				ans.writeInt(MiddlewareConstants.PACKET_START_MONITORING_FAILURE);
 			}
 			ctx.writeAndFlush(ans);
-			ans.release();
+//			ans.release();
 		}
 		else if (header == MiddlewareConstants.PACKET_REQUEST_DB_LOG)
 		{
@@ -93,7 +93,7 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			ans.writeInt(log.getBytes().length);
 			ans.writeBytes(log.getBytes());
 			ctx.writeAndFlush(ans);
-			ans.release();
+//			ans.release();
 		}
 		else if (header == MiddlewareConstants.PACKET_REQUEST_SYS_LOG)
 		{
@@ -109,7 +109,7 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			ans.writeInt(log.getBytes().length);
 			ans.writeBytes(log.getBytes());
 			ctx.writeAndFlush(ans);
-			ans.release();
+//			ans.release();
 		}
 		else
 		{
