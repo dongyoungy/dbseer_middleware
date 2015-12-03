@@ -88,7 +88,7 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			{
 				log += aLog;
 			}
-			ByteBuf ans = Unpooled.buffer();
+			ByteBuf ans = Unpooled.buffer(8 + log.getBytes().length);
 			ans.writeInt(MiddlewareConstants.PACKET_DB_LOG);
 			ans.writeInt(log.getBytes().length);
 			ans.writeBytes(log.getBytes());
@@ -104,7 +104,7 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			{
 				log += aLog;
 			}
-			ByteBuf ans = Unpooled.buffer();
+			ByteBuf ans = Unpooled.buffer(8 + log.getBytes().length);
 			ans.writeInt(MiddlewareConstants.PACKET_SYS_LOG);
 			ans.writeInt(log.getBytes().length);
 			ans.writeBytes(log.getBytes());

@@ -74,6 +74,7 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 			Log.debug("received sys log.");
 			// write sys log.
 			int length = b.readInt();
+			Log.debug("sys log length = " + length);
 			String log = b.toString(b.readerIndex(), length, Charset.defaultCharset());
 			sysLogWriter.write(log);
 			sysLogWriter.flush();
