@@ -27,15 +27,23 @@ import java.util.concurrent.BlockingQueue;
  */
 public class LogTailerListener extends TailerListenerAdapter
 {
+	boolean discardFirstline;
 	private ArrayBlockingQueue<String> queue;
 
-	public LogTailerListener(ArrayBlockingQueue<String> queue)
+	public LogTailerListener(ArrayBlockingQueue<String> queue, boolean discard)
 	{
 		this.queue = queue;
+		this.discardFirstline = discard;
 	}
 
 	public void handle(String line, long offset)
 	{
+		if (discardFirstline)
+		{
+			discardFirstline = false;
+			return;
+		}
+		
 		if (!queue.offer(line + System.lineSeparator()))
 		{
 			queue.poll();

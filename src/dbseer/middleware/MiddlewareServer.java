@@ -221,8 +221,9 @@ public class MiddlewareServer
 		dbLogFile = new File(dbLogPath);
 		sysLogFile = new File(sysLogPath);
 
-		LogTailerListener dbLogListener = new LogTailerListener(dbLogQueue);
-		LogTailerListener sysLogListener = new LogTailerListener(sysLogQueue);
+		// discard first line for db log because of a possible truncates.
+		LogTailerListener dbLogListener = new LogTailerListener(dbLogQueue, true);
+		LogTailerListener sysLogListener = new LogTailerListener(sysLogQueue, false);
 
 		// starts from the last line for db log.
 		dbLogTailer = new LogTailer(dbLogFile, dbLogListener, 250, -1);
