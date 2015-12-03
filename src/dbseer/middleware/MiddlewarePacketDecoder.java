@@ -49,13 +49,13 @@ public class MiddlewarePacketDecoder extends ByteToMessageDecoder
 			return;
 		}
 		String log = "";
+		Log.debug(String.format("len = %d, readable = %d", length, buf.readableBytes()));
 
 		if (length > 0)
 		{
-			log = buf.toString(buf.readerIndex(), length, Charset.defaultCharset());
+//			log = buf.toString(buf.readerIndex(), buf.readableBytes(), Charset.defaultCharset());
 		}
 
 		out.add(new MiddlewarePacket(header, length, log));
-		buf.release();
 	}
 }
