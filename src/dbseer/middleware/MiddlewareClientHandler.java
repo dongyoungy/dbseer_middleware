@@ -43,7 +43,6 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception
 	{
-		super.channelRead(ctx, msg);
 		Log.debug("channel read");
 
 		ByteBuf b = (ByteBuf) msg;
@@ -85,4 +84,13 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 		}
 		b.release();
 	}
+
+	@Override
+	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception
+	{
+		Log.debug("Child handler exception caught");
+		cause.printStackTrace();
+		ctx.close();
+	}
+
 }

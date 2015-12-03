@@ -59,7 +59,6 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception
 	{
-		super.channelRead(ctx, msg);
 		Log.debug("Child handler channel read");
 
 		ByteBuf b = (ByteBuf) msg;
@@ -122,7 +121,8 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception
 	{
-		super.exceptionCaught(ctx, cause);
 		Log.debug("Child handler exception caught");
+		cause.printStackTrace();
+		ctx.close();
 	}
 }
