@@ -16,6 +16,7 @@
 
 package dbseer.middleware;
 
+import com.esotericsoftware.minlog.Log;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
@@ -33,6 +34,7 @@ public class MiddlewarePacketDecoder extends ByteToMessageDecoder
 	{
 		if (buf.readableBytes() < 8)
 		{
+			Log.debug(this.getClass().getCanonicalName(), "buf less than 8 bytes");
 			return;
 		}
 
@@ -43,6 +45,7 @@ public class MiddlewarePacketDecoder extends ByteToMessageDecoder
 		if (buf.readableBytes() < length)
 		{
 			buf.resetReaderIndex();
+			Log.debug(this.getClass().getCanonicalName(), "readable bytes less than length = " + length + " and header = " + header);
 			return;
 		}
 		String log = "";
@@ -51,6 +54,8 @@ public class MiddlewarePacketDecoder extends ByteToMessageDecoder
 		{
 			log = buf.toString(buf.readerIndex(), length, Charset.defaultCharset());
 		}
+
 		out.add(new MiddlewarePacket(header, length, log));
+		buf.release();
 	}
 }

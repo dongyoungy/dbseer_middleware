@@ -37,10 +37,10 @@ public class LogTailerListener extends TailerListenerAdapter
 	public void handle(String line, long offset)
 	{
 		Log.debug("tailer handling a line.");
-		if (!queue.offer(line))
+		if (!queue.offer(line + System.lineSeparator()))
 		{
 			queue.poll();
-			queue.offer(line);
+			queue.offer(line + System.lineSeparator());
 		}
 	}
 }
