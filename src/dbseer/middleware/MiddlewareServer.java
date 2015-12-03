@@ -381,11 +381,11 @@ public class MiddlewareServer
 		{
 			//System.out.println("USAGE: MiddlewareServer -d <dblogfile> -s <syslogfile>");
 			formatter.printHelp("MiddlewareServer", options, true);
-			Log.error("ERROR: " + e.getMessage());
+			Log.error(e.getMessage());
 		}
 		catch (Exception e)
 		{
-			Log.error("ERROR: " + e.getMessage());
+			Log.error(e.getMessage());
 		}
 	}
 }

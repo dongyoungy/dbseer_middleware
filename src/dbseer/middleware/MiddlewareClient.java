@@ -214,11 +214,11 @@ public class MiddlewareClient
 		{
 			//System.out.println("USAGE: MiddlewareServer -d <dblogfile> -s <syslogfile>");
 			formatter.printHelp("MiddlewareClient", options, true);
-			Log.error("ERROR: " + e.getMessage());
+			Log.error(e.getMessage());
 		}
 		catch (Exception e)
 		{
-			Log.error("ERROR: " + e.getMessage());
+			Log.error(e.getMessage());
 		}
 	}
 }
