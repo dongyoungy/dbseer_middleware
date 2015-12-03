@@ -76,7 +76,7 @@ public class MiddlewareClient
 		final PrintWriter sysLogWriter = new PrintWriter(new FileWriter(sysLogFile, false));
 
 		// client needs to handle incoming messages from the middleware as well.
-		EventLoopGroup group = new NioEventLoopGroup();
+		EventLoopGroup group = new NioEventLoopGroup(2);
 
 		final MiddlewareClient client = this;
 

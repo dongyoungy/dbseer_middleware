@@ -98,8 +98,8 @@ public class MiddlewareServer
 		}
 
 		// let's start accepting connections.
-		EventLoopGroup bossGroup = new NioEventLoopGroup();
-		EventLoopGroup workerGroup = new NioEventLoopGroup();
+		EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+		EventLoopGroup workerGroup = new NioEventLoopGroup(4);
 
 		final MiddlewareServer server = this;
 		try
