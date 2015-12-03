@@ -53,7 +53,7 @@ public class MiddlewarePacketDecoder extends ByteToMessageDecoder
 
 		if (length > 0)
 		{
-//			log = buf.toString(buf.readerIndex(), buf.readableBytes(), Charset.defaultCharset());
+			log = buf.toString(buf.readerIndex(), buf.readableBytes(), Charset.defaultCharset());
 		}
 
 		out.add(new MiddlewarePacket(header, length, log));

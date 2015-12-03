@@ -122,6 +122,7 @@ public class MiddlewareClient
 		}
 		ByteBuf b = Unpooled.buffer();
 		b.writeInt(MiddlewareConstants.PACKET_START_MONITORING);
+		b.writeInt(0);
 		channel.writeAndFlush(b);
 		Log.debug("Start monitoring packet sent.");
 		retry++;
