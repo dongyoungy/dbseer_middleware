@@ -75,8 +75,8 @@ public class MiddlewareClient
 		// set up log files
 		File dbLogFile = new File(dbLogPath);
 		File sysLogFile = new File(sysLogPath);
-		PrintWriter dbLogWriter = new PrintWriter(new FileWriter(dbLogFile, false));
-		PrintWriter sysLogWriter = new PrintWriter(new FileWriter(sysLogFile, false));
+		final PrintWriter dbLogWriter = new PrintWriter(new FileWriter(dbLogFile, false));
+		final PrintWriter sysLogWriter = new PrintWriter(new FileWriter(sysLogFile, false));
 
 		// client needs to handle incoming messages from the middleware as well.
 		EventLoopGroup group = new NioEventLoopGroup();
