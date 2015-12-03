@@ -41,9 +41,12 @@ public class MiddlewareClientLogRequester implements Runnable
 		// Let's create requesting Bytebufs and reuse them.
 		ByteBuf sysLogRequest = Unpooled.buffer();
 		ByteBuf dbLogRequest = Unpooled.buffer();
+		String str = "";
 
 		sysLogRequest.writeInt(MiddlewareConstants.PACKET_REQUEST_SYS_LOG);
 		dbLogRequest.writeInt(MiddlewareConstants.PACKET_REQUEST_DB_LOG);
+		sysLogRequest.writeInt(0);
+		dbLogRequest.writeInt(0);
 
 		while (true)
 		{
@@ -63,8 +66,9 @@ public class MiddlewareClientLogRequester implements Runnable
 			}
 
 			Log.debug("Requester sending log requests.");
-			channel.writeAndFlush(sysLogRequest);
-			channel.writeAndFlush(dbLogRequest);
+			channel.write(sysLogRequest);
+			channel.write(dbLogRequest);
+			channel.flush();
 
 			sysLogRequest = sysLogRequest.duplicate().retain();
 			dbLogRequest = dbLogRequest.duplicate().retain();

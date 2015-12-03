@@ -59,8 +59,8 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception
 	{
-		ByteBuf b = (ByteBuf) msg;
-		int header = b.readInt();
+		MiddlewarePacket packet = (MiddlewarePacket) msg;
+		int header = packet.header;
 
 		Log.debug("Child handler channel read header = " + header);
 		if (header == MiddlewareConstants.PACKET_START_MONITORING)
@@ -91,8 +91,8 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			}
 			ByteBuf ans = Unpooled.buffer(8 + log.getBytes().length);
 			ans.writeInt(MiddlewareConstants.PACKET_DB_LOG);
-			ans.writeInt(log.getBytes().length);
-			ans.writeBytes(log.getBytes());
+			ans.writeInt(log.getBytes("UTF-8").length);
+			ans.writeBytes(log.getBytes("UTF-8"));
 			ctx.writeAndFlush(ans);
 			Log.debug("db log sent");
 //			ans.release();
@@ -108,17 +108,16 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			}
 			ByteBuf ans = Unpooled.buffer(8 + log.getBytes().length);
 			ans.writeInt(MiddlewareConstants.PACKET_SYS_LOG);
-			ans.writeInt(log.getBytes().length);
-			ans.writeBytes(log.getBytes());
+			ans.writeInt(log.getBytes("UTF-8").length);
+			ans.writeBytes(log.getBytes("UTF-8"));
 			ctx.writeAndFlush(ans);
 			Log.debug("sys log sent");
 //			ans.release();
 		}
 		else
 		{
-			Log.error("Unknown packet received: " + b.toString());
+			Log.error("Unknown packet received: " + packet.header);
 		}
-		b.release();
 	}
 
 	@Override
