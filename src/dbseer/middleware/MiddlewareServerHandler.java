@@ -40,6 +40,13 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 	}
 
 	@Override
+	public void channelInactive(ChannelHandlerContext ctx) throws Exception
+	{
+		super.channelInactive(ctx);
+		Log.debug("Child handler channel inactive");
+	}
+
+	@Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception
 	{
 		super.channelActive(ctx);
