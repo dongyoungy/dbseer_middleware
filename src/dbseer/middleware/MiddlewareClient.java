@@ -193,7 +193,7 @@ public class MiddlewareClient
 		try
 		{
 			CommandLine line = clParser.parse(options, args);
-			if (line.hasOption("h"))
+			if (line.hasOption("?"))
 			{
 				formatter.printHelp("MiddlewareClient", options, true);
 				return;
