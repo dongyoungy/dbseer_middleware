@@ -64,6 +64,9 @@ public class MiddlewareClientLogRequester implements Runnable
 			Log.debug("Requester sending log requests.");
 			channel.writeAndFlush(sysLogRequest);
 			channel.writeAndFlush(dbLogRequest);
+
+			sysLogRequest = sysLogRequest.duplicate().retain();
+			dbLogRequest = dbLogRequest.duplicate().retain();
 		}
 	}
 }
