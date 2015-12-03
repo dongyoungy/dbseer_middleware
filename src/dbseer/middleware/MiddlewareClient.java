@@ -124,7 +124,6 @@ public class MiddlewareClient
 		b.writeInt(MiddlewareConstants.PACKET_START_MONITORING);
 		channel.writeAndFlush(b);
 		Log.debug("Start monitoring packet sent.");
-		b.release();
 		retry++;
 	}
 
