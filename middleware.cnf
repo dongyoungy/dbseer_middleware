@@ -1,6 +1,8 @@
 [dbseer_middleware]
 listen_port=3555
-dblog_path=db.log
-syslog_path=sys.log
-db_id=root
+dblog_path=/home/dyoon/maxscale/dbs.log
+syslog_path=/home/dyoon/maxscale/sys.log
+db_host=localhost
+db_port=3400
+db_user=root
 db_pw=
