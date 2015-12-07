@@ -21,10 +21,7 @@ package dbseer.middleware;
  */
 public class MiddlewareConstants
 {
-	public static final String LOGGER_NAME = "dbseer.middleware.logger";
 	public static final int QUEUE_SIZE = 1800; // equi. 30 min logs
-	public static final int DB_LOG_TAILER = 1;
-	public static final int SYS_LOG_TAILER = 2;
 
 	public static final int PACKET_START_MONITORING = 1;
 	public static final int PACKET_START_MONITORING_SUCCESS = 11;

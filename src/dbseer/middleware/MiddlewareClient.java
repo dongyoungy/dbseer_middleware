@@ -208,7 +208,6 @@ public class MiddlewareClient
 		}
 		catch (ParseException e)
 		{
-			//System.out.println("USAGE: MiddlewareServer -d <dblogfile> -s <syslogfile>");
 			formatter.printHelp("MiddlewareClient", options, true);
 			Log.error(e.getMessage());
 		}

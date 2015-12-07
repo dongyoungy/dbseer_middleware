@@ -86,7 +86,6 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			}
 			ans.writeInt(0);
 			ctx.writeAndFlush(ans);
-//			ans.release();
 		}
 		else if (header == MiddlewareConstants.PACKET_REQUEST_DB_LOG)
 		{
@@ -103,7 +102,6 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			ans.writeBytes(log.getBytes("UTF-8"));
 			ctx.writeAndFlush(ans);
 			Log.debug("db log sent");
-//			ans.release();
 		}
 		else if (header == MiddlewareConstants.PACKET_REQUEST_SYS_LOG)
 		{
@@ -120,7 +118,6 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			ans.writeBytes(log.getBytes("UTF-8"));
 			ctx.writeAndFlush(ans);
 			Log.debug("sys log sent");
-//			ans.release();
 		}
 		else
 		{

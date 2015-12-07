@@ -43,6 +43,7 @@ public class MiddlewareClientLogRequester implements Runnable
 		ByteBuf dbLogRequest = Unpooled.buffer();
 		String str = "";
 
+		// write header and length (mandatory!)
 		sysLogRequest.writeInt(MiddlewareConstants.PACKET_REQUEST_SYS_LOG);
 		dbLogRequest.writeInt(MiddlewareConstants.PACKET_REQUEST_DB_LOG);
 		sysLogRequest.writeInt(0);
@@ -55,13 +56,13 @@ public class MiddlewareClientLogRequester implements Runnable
 				Thread.sleep(1000 * DELAY);
 				if (Thread.currentThread().isInterrupted())
 				{
-					Log.error(this.getClass().getCanonicalName(), "interrupted.");
+					Log.debug(this.getClass().getCanonicalName(), "interrupted.");
 					break;
 				}
 			}
 			catch (InterruptedException e)
 			{
-				Log.error(this.getClass().getCanonicalName(), "Exception caught while sleeping: " + e.getMessage());
+				Log.debug(this.getClass().getCanonicalName(), "Exception caught while sleeping: " + e.getMessage());
 				break;
 			}
 
@@ -70,6 +71,7 @@ public class MiddlewareClientLogRequester implements Runnable
 			channel.write(dbLogRequest);
 			channel.flush();
 
+			// retain the ref count.
 			sysLogRequest = sysLogRequest.duplicate().retain();
 			dbLogRequest = dbLogRequest.duplicate().retain();
 		}
