@@ -75,5 +75,7 @@ public class MiddlewareClientLogRequester implements Runnable
 			sysLogRequest = sysLogRequest.duplicate().retain();
 			dbLogRequest = dbLogRequest.duplicate().retain();
 		}
+
+		Log.debug("Log requester terminated.");
 	}
 }
