@@ -46,7 +46,10 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 	{
 		super.channelInactive(ctx);
 		Log.debug("Child handler channel inactive");
-		server.stopMonitoring();
+		if (server.getConnectedChannelGroup().size() == 0)
+		{
+			server.stopMonitoring();
+		}
 	}
 
 	@Override
