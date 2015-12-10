@@ -198,7 +198,7 @@
   </target>
 
 	<target name="clean" depends="init">
-		<deltree dir="${bin}" />
+		<delete dir="${bin}" />
 	</target>
 
 	<target name="prepare" depends="clean">
