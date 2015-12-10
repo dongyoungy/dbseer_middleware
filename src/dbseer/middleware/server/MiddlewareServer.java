@@ -59,7 +59,6 @@ public class MiddlewareServer
 	private String dbPassword;
 	private String dbHost;
 	private String dbPort;
-	private String testDB;
 
 	private boolean hasConnected;
 	private String remoteHostString;
@@ -76,7 +75,7 @@ public class MiddlewareServer
 
 	private ChannelGroup connectedChannelGroup;
 
-	public MiddlewareServer(int port, String dbLogPath, String sysLogPath, String dbUser, String dbPassword, String dbHost, String dbPort, String testDB)
+	public MiddlewareServer(int port, String dbLogPath, String sysLogPath, String dbUser, String dbPassword, String dbHost, String dbPort)
 	{
 		this.port = port;
 		this.dbLogPath = dbLogPath;
@@ -85,7 +84,6 @@ public class MiddlewareServer
 		this.dbPassword = dbPassword;
 		this.dbHost = dbHost;
 		this.dbPort = dbPort;
-		this.testDB = testDB;
 		this.connectedChannelGroup = new DefaultChannelGroup("all-connected", GlobalEventExecutor.INSTANCE);
 	}
 
@@ -107,7 +105,6 @@ public class MiddlewareServer
 		Log.info(String.format("DB Port = %s", dbPort));
 		Log.info(String.format("DB User = %s", dbUser));
 		Log.info(String.format("DB PW = %s", dbPassword));
-		Log.info(String.format("Test DB = %s", testDB));
 
 		// test MySQL/MariaDB connection using JDBC before we start anything.
 		if (!testMySQLConnection())
@@ -260,7 +257,7 @@ public class MiddlewareServer
 
 	private boolean testMySQLConnection()
 	{
-		String url = String.format("jdbc:mysql://%s:%s/%s", dbHost, dbPort, testDB);
+		String url = String.format("jdbc:mysql://%s:%s", dbHost, dbPort);
 		boolean canConnect = false;
 		try
 		{
@@ -333,8 +330,7 @@ public class MiddlewareServer
 		{
 			CommandLine line = clParser.parse(options, args);
 			int port = 3555; // default port
-			String dbLogPath, sysLogPath, dbUser, dbPassword, dbHost, dbPort, testDB;
-			testDB = "test"; // default test DB
+			String dbLogPath, sysLogPath, dbUser, dbPassword, dbHost, dbPort;
 
 			if (line.hasOption("h"))
 			{
@@ -364,11 +360,6 @@ public class MiddlewareServer
 			if (portStr != null)
 			{
 				port = Integer.parseInt(portStr);
-			}
-			String testDBStr = section.get("testDB");
-			if (testDBStr != null)
-			{
-				testDB = testDBStr;
 			}
 			dbLogPath = section.get("dblog_path");
 			if (dbLogPath == null)
@@ -405,7 +396,7 @@ public class MiddlewareServer
 				throw new Exception("'db_pw' is missing in the configuration file.");
 			}
 
-			MiddlewareServer server = new MiddlewareServer(port, dbLogPath, sysLogPath, dbUser, dbPassword, dbHost, dbPort, testDB);
+			MiddlewareServer server = new MiddlewareServer(port, dbLogPath, sysLogPath, dbUser, dbPassword, dbHost, dbPort);
 			server.run();
 		}
 		catch (ParseException e)
