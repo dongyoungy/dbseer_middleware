@@ -90,8 +90,7 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception
 	{
-		Log.debug("Child handler exception caught");
-		cause.printStackTrace();
+		Log.debug("Child handler exception caught: " + cause.toString());
 		ctx.close();
 	}
 
