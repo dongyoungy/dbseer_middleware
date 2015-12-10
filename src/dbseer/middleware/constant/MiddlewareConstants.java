@@ -30,5 +30,5 @@ public class MiddlewareConstants
 	public static final int PACKET_DB_LOG = 21;
 	public static final int PACKET_REQUEST_SYS_LOG = 3;
 	public static final int PACKET_SYS_LOG = 31;
-	public static final int PACKET_CONNECTION_DENIED = 3;
+	public static final int PACKET_CONNECTION_DENIED = 4;
 }
