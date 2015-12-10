@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-package dbseer.middleware;
+package dbseer.middleware.packet;
 
 /**
- * Created by Dong Young Yoon on 12/1/15.
+ * Created by Dong Young Yoon on 12/2/15.
  */
-public class MiddlewareConstants
+public class MiddlewarePacket
 {
-	public static final int QUEUE_SIZE = 1800; // equi. 30 min logs
+	public int header;
+	public int length;
+	public String log;
 
-	public static final int PACKET_START_MONITORING = 1;
-	public static final int PACKET_START_MONITORING_SUCCESS = 11;
-	public static final int PACKET_START_MONITORING_FAILURE = 12;
-	public static final int PACKET_REQUEST_DB_LOG = 2;
-	public static final int PACKET_DB_LOG = 21;
-	public static final int PACKET_REQUEST_SYS_LOG = 3;
-	public static final int PACKET_SYS_LOG = 31;
+	public MiddlewarePacket(int header, int length, String log)
+	{
+		this.header = header;
+		this.length = length;
+		this.log = log;
+	}
 }

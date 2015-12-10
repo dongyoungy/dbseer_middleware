@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package dbseer.middleware;
+package dbseer.middleware.packet;
 
 import com.esotericsoftware.minlog.Log;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 
-import java.nio.charset.Charset;
 import java.util.List;
 
 /**

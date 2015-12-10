@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-package dbseer.middleware;
+package dbseer.middleware.server;
 
-import com.esotericsoftware.minlog.Log;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-
-import java.net.InetSocketAddress;
 
 /**
  * Created by Dong Young Yoon on 12/1/15.

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dbseer.middleware;
+package dbseer.middleware.log;
 
 import com.esotericsoftware.minlog.Log;
 import org.apache.commons.io.input.TailerListenerAdapter;

@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package dbseer.middleware;
+package dbseer.middleware.log;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.input.Tailer;
-import org.apache.commons.io.input.TailerListener;
 
 import java.io.File;
 import java.io.FileNotFoundException;

@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package dbseer.middleware;
+package dbseer.middleware.server;
 
 import com.esotericsoftware.minlog.Log;
+import dbseer.middleware.constant.MiddlewareConstants;
+import dbseer.middleware.packet.MiddlewarePacket;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -71,6 +73,21 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 		int header = packet.header;
 
 		Log.debug("Child handler channel read header = " + header);
+
+		if (server.getConnectedChannelGroup().size() > 0 && !server.getConnectedChannelGroup().contains(ctx.channel()))
+		{
+			ByteBuf ans = Unpooled.buffer();
+			ans.writeInt(MiddlewareConstants.PACKET_CONNECTION_DENIED);
+			ans.writeInt(0);
+			ctx.writeAndFlush(ans);
+			return;
+		}
+
+		if (server.getConnectedChannelGroup().size() == 0)
+		{
+			server.getConnectedChannelGroup().add(ctx.channel());
+		}
+
 		if (header == MiddlewareConstants.PACKET_START_MONITORING)
 		{
 			boolean isStarted;

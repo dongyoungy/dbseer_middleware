@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package dbseer.middleware;
+package dbseer.middleware.client;
 
 import com.esotericsoftware.minlog.Log;
+import dbseer.middleware.constant.MiddlewareConstants;
+import dbseer.middleware.packet.MiddlewarePacketDecoder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -51,6 +53,7 @@ public class MiddlewareClient
 
 	private Channel channel = null;
 	private ExecutorService requesterExecutor = null;
+	private MiddlewareClientLogRequester logRequester = null;
 
 	public MiddlewareClient(String host, int port, String sysLogPath, String dbLogPath)
 	{
@@ -114,6 +117,16 @@ public class MiddlewareClient
 		}
 	}
 
+	public Channel getChannel()
+	{
+		return channel;
+	}
+
+	public MiddlewareClientLogRequester getLogRequester()
+	{
+		return logRequester;
+	}
+
 	public void startMonitoring() throws Exception
 	{
 		if (retry > MAX_RETRY)
@@ -130,9 +143,9 @@ public class MiddlewareClient
 
 	public void startRequester() throws Exception
 	{
-		MiddlewareClientLogRequester requester = new MiddlewareClientLogRequester(channel);
+		logRequester = new MiddlewareClientLogRequester(channel);
 		requesterExecutor = Executors.newSingleThreadExecutor();
-		requesterExecutor.submit(requester);
+		requesterExecutor.submit(logRequester);
 		Log.debug("Log requester launched.");
 	}
 

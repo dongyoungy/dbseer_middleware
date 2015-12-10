@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package dbseer.middleware;
+package dbseer.middleware.client;
 
 import com.esotericsoftware.minlog.Log;
-import io.netty.buffer.ByteBuf;
+import dbseer.middleware.constant.MiddlewareConstants;
+import dbseer.middleware.packet.MiddlewarePacket;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
 import java.io.PrintWriter;
-import java.nio.charset.Charset;
 
 /**
  * Created by Dong Young Yoon on 12/2/15.
@@ -66,6 +66,7 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 			// write db log.
 			dbLogWriter.write(packet.log);
 			dbLogWriter.flush();
+			client.getLogRequester().dbLogReceived();
 		}
 		else if (header == MiddlewareConstants.PACKET_SYS_LOG)
 		{
@@ -73,6 +74,12 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 			// write sys log.
 			sysLogWriter.write(packet.log);
 			sysLogWriter.flush();
+			client.getLogRequester().sysLogReceived();
+		}
+		else if (header == MiddlewareConstants.PACKET_CONNECTION_DENIED)
+		{
+			Log.debug("connection denied");
+			client.getChannel().close().sync();
 		}
 		else
 		{

@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="dbseer_middleware" default="all">
+  
+  
+  <!--<property file="build.properties"/>-->
+  <!-- Uncomment the following property if no tests compilation is needed -->
+  <!-- 
+  <property name="skip.tests" value="true"/>
+   -->
+  
+  <!-- Compiler options -->
+  
+  <property name="compiler.debug" value="on"/>
+  <property name="compiler.generate.no.warnings" value="off"/>
+  <property name="compiler.args" value=""/>
+  <property name="compiler.max.memory" value="700m"/>
+  <patternset id="ignored.files">
+    <exclude name="**/*.hprof/**"/>
+    <exclude name="**/*.pyc/**"/>
+    <exclude name="**/*.pyo/**"/>
+    <exclude name="**/*.rbc/**"/>
+    <exclude name="**/*~/**"/>
+    <exclude name="**/.DS_Store/**"/>
+    <exclude name="**/.git/**"/>
+    <exclude name="**/.hg/**"/>
+    <exclude name="**/.svn/**"/>
+    <exclude name="**/CVS/**"/>
+    <exclude name="**/RCS/**"/>
+    <exclude name="**/SCCS/**"/>
+    <exclude name="**/__pycache__/**"/>
+    <exclude name="**/_svn/**"/>
+    <exclude name="**/rcs/**"/>
+    <exclude name="**/vssver.scc/**"/>
+    <exclude name="**/vssver2.scc/**"/>
+  </patternset>
+  <patternset id="library.patterns">
+    <include name="*.war"/>
+    <include name="*.swc"/>
+    <include name="*.apk"/>
+    <include name="*.zip"/>
+    <include name="*.ear"/>
+    <include name="*.egg"/>
+    <include name="*.ane"/>
+    <include name="*.jar"/>
+  </patternset>
+  <patternset id="compiler.resources">
+    <exclude name="**/?*.java"/>
+    <exclude name="**/?*.form"/>
+    <exclude name="**/?*.class"/>
+    <exclude name="**/?*.groovy"/>
+    <exclude name="**/?*.scala"/>
+    <exclude name="**/?*.flex"/>
+    <exclude name="**/?*.kt"/>
+    <exclude name="**/?*.clj"/>
+    <exclude name="**/?*.aj"/>
+  </patternset>
+  
+  
+  <!-- Project Libraries -->
+  
+  <path id="library.commons-cli-1.3.1.classpath">
+    <pathelement location="${basedir}/lib/commons-cli-1.3.1.jar"/>
+  </path>
+  
+  <path id="library.commons-io-2.4.classpath">
+    <pathelement location="${basedir}/lib/commons-io-2.4.jar"/>
+  </path>
+  
+  <path id="library.commons-lang3-3.4.classpath">
+    <pathelement location="${basedir}/lib/commons-lang3-3.4.jar"/>
+  </path>
+  
+  <path id="library.ini4j-0.5.4.classpath">
+    <pathelement location="${basedir}/lib/ini4j-0.5.4.jar"/>
+  </path>
+  
+  <path id="library.minlog-1.2.classpath">
+    <pathelement location="${basedir}/lib/minlog-1.2.jar"/>
+  </path>
+  
+  <path id="library.mysql-connector-java-5.1.37-bin.classpath">
+    <pathelement location="${basedir}/lib/mysql-connector-java-5.1.37-bin.jar"/>
+  </path>
+  
+  <path id="library.netty-all-4.0.33.final.classpath">
+    <pathelement location="${basedir}/lib/netty-all-4.0.33.Final.jar"/>
+  </path>
+  
+  <!-- Modules -->
+  
+  
+  <!-- Module dbseer_middleware -->
+  
+  <dirname property="module.dbseer_middleware.basedir" file="${ant.file}"/>
+  
+  
+  
+  <property name="compiler.args.dbseer_middleware" value="-encoding UTF-8 -source 8 -target 8 ${compiler.args}"/>
+  
+  <property name="dbseer_middleware.output.dir" value="${module.dbseer_middleware.basedir}/out/production/dbseer_middleware"/>
+  <property name="dbseer_middleware.testoutput.dir" value="${module.dbseer_middleware.basedir}/out/test/dbseer_middleware"/>
+  
+  <path id="dbseer_middleware.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="dbseer_middleware.module.production.classpath">
+    <path refid="library.netty-all-4.0.33.final.classpath"/>
+    <path refid="library.commons-cli-1.3.1.classpath"/>
+    <path refid="library.commons-io-2.4.classpath"/>
+    <path refid="library.ini4j-0.5.4.classpath"/>
+    <path refid="library.minlog-1.2.classpath"/>
+    <path refid="library.commons-lang3-3.4.classpath"/>
+    <path refid="library.mysql-connector-java-5.1.37-bin.classpath"/>
+  </path>
+  
+  <path id="dbseer_middleware.runtime.production.module.classpath">
+    <pathelement location="${dbseer_middleware.output.dir}"/>
+    <path refid="library.netty-all-4.0.33.final.classpath"/>
+    <path refid="library.commons-cli-1.3.1.classpath"/>
+    <path refid="library.commons-io-2.4.classpath"/>
+    <path refid="library.ini4j-0.5.4.classpath"/>
+    <path refid="library.minlog-1.2.classpath"/>
+    <path refid="library.commons-lang3-3.4.classpath"/>
+    <path refid="library.mysql-connector-java-5.1.37-bin.classpath"/>
+  </path>
+  
+  <path id="dbseer_middleware.module.classpath">
+    <pathelement location="${dbseer_middleware.output.dir}"/>
+    <path refid="library.netty-all-4.0.33.final.classpath"/>
+    <path refid="library.commons-cli-1.3.1.classpath"/>
+    <path refid="library.commons-io-2.4.classpath"/>
+    <path refid="library.ini4j-0.5.4.classpath"/>
+    <path refid="library.minlog-1.2.classpath"/>
+    <path refid="library.commons-lang3-3.4.classpath"/>
+    <path refid="library.mysql-connector-java-5.1.37-bin.classpath"/>
+  </path>
+  
+  <path id="dbseer_middleware.runtime.module.classpath">
+    <pathelement location="${dbseer_middleware.testoutput.dir}"/>
+    <pathelement location="${dbseer_middleware.output.dir}"/>
+    <path refid="library.netty-all-4.0.33.final.classpath"/>
+    <path refid="library.commons-cli-1.3.1.classpath"/>
+    <path refid="library.commons-io-2.4.classpath"/>
+    <path refid="library.ini4j-0.5.4.classpath"/>
+    <path refid="library.minlog-1.2.classpath"/>
+    <path refid="library.commons-lang3-3.4.classpath"/>
+    <path refid="library.mysql-connector-java-5.1.37-bin.classpath"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.dbseer_middleware">
+    <patternset refid="ignored.files"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.dbseer_middleware">
+    <patternset refid="excluded.from.module.dbseer_middleware"/>
+  </patternset>
+  
+  <path id="dbseer_middleware.module.sourcepath">
+    <dirset dir="${module.dbseer_middleware.basedir}">
+      <include name="src"/>
+    </dirset>
+  </path>
+  
+  
+  <target name="compile.module.dbseer_middleware" depends="compile.module.dbseer_middleware.production,compile.module.dbseer_middleware.tests" description="Compile module dbseer_middleware"/>
+  
+  <target name="compile.module.dbseer_middleware.production" description="Compile module dbseer_middleware; production classes">
+    <mkdir dir="${dbseer_middleware.output.dir}"/>
+    <javac destdir="${dbseer_middleware.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true">
+      <compilerarg line="${compiler.args.dbseer_middleware}"/>
+      <bootclasspath refid="dbseer_middleware.module.bootclasspath"/>
+      <classpath refid="dbseer_middleware.module.production.classpath"/>
+      <src refid="dbseer_middleware.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.dbseer_middleware"/>
+    </javac>
+    
+    <copy todir="${dbseer_middleware.output.dir}">
+      <fileset dir="${module.dbseer_middleware.basedir}/src">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="compile.module.dbseer_middleware.tests" depends="compile.module.dbseer_middleware.production" description="compile module dbseer_middleware; test classes" unless="skip.tests"/>
+  
+  <target name="clean.module.dbseer_middleware" description="cleanup module">
+    <delete dir="${dbseer_middleware.output.dir}"/>
+    <delete dir="${dbseer_middleware.testoutput.dir}"/>
+  </target>
+  
+  <target name="init" description="Build initialization">
+    <!-- Perform any build initialization in this target -->
+		<property name="src" value="src" />
+		<property name="bin" value="bin" />
+  </target>
+
+	<target name="clean" depends="init">
+		<deltree dir="${bin}" />
+	</target>
+
+	<target name="prepare" depends="clean">
+		<mkdir dir="${bin}" />
+	</target>
+
+	<target name="compile" depends="prepare">
+		<javac srcdir="${src}" destdir="${bin}" >
+      <bootclasspath refid="dbseer_middleware.module.bootclasspath"/>
+      <classpath refid="dbseer_middleware.module.production.classpath"/>
+		</javac>
+	</target>
+  
+  <target name="clean.module" depends="clean.module.dbseer_middleware" description="cleanup all"/>
+  
+  <target name="build.modules" depends="init, clean.module, compile.module.dbseer_middleware" description="build all modules"/>
+  
+  <target name="all" depends="compile ,build.modules" description="build all"/>
+</project>

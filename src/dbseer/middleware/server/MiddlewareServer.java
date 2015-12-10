@@ -14,15 +14,22 @@
  * limitations under the License.
  */
 
-package dbseer.middleware;
+package dbseer.middleware.server;
 
 import com.esotericsoftware.minlog.Log;
+import dbseer.middleware.constant.MiddlewareConstants;
+import dbseer.middleware.log.LogTailer;
+import dbseer.middleware.log.LogTailerListener;
+import dbseer.middleware.packet.MiddlewarePacketDecoder;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
+import io.netty.util.concurrent.GlobalEventExecutor;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang3.StringUtils;
 import org.ini4j.Ini;
@@ -67,6 +74,8 @@ public class MiddlewareServer
 	private ArrayBlockingQueue<String> dbLogQueue;
 	private ArrayBlockingQueue<String> sysLogQueue;
 
+	private ChannelGroup connectedChannelGroup;
+
 	public MiddlewareServer(int port, String dbLogPath, String sysLogPath, String dbUser, String dbPassword, String dbHost, String dbPort, String testDB)
 	{
 		this.port = port;
@@ -77,6 +86,12 @@ public class MiddlewareServer
 		this.dbHost = dbHost;
 		this.dbPort = dbPort;
 		this.testDB = testDB;
+		this.connectedChannelGroup = new DefaultChannelGroup("all-connected", GlobalEventExecutor.INSTANCE);
+	}
+
+	public ChannelGroup getConnectedChannelGroup()
+	{
+		return connectedChannelGroup;
 	}
 
 	public void run() throws Exception
@@ -221,6 +236,11 @@ public class MiddlewareServer
 
 	private void runTailer() throws Exception
 	{
+		if (tailerExecutor != null)
+		{
+			tailerExecutor.shutdownNow();
+		}
+
 		dbLogFile = new File(dbLogPath);
 		sysLogFile = new File(sysLogPath);
 
