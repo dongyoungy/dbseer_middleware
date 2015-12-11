@@ -119,6 +119,14 @@ public class MiddlewareClientLogRequester implements Runnable
 			catch (Exception e)
 			{
 				Log.error(this.getClass().getCanonicalName(), "Exception caught while sleeping: " + e.getMessage());
+				try
+				{
+					channel.close().sync();
+				}
+				catch (InterruptedException e1)
+				{
+					Log.error(this.getClass().getCanonicalName(), "Exception caught while closing connection: " + e1.getMessage());
+				}
 				return;
 			}
 		}
