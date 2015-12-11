@@ -27,13 +27,13 @@ import io.netty.channel.Channel;
  */
 public class MiddlewareClientLogRequester implements Runnable
 {
-	private static final int DELAY = 1;
-	private static final int TIMEOUT = 5; // # of allowed timeouts.
+	private static final int SECONDS_TO_TIMEOUT = 10;
+	private static final int TIMEOUT = 3; // # of allowed timeouts.
 	private volatile boolean isDbLogReceived = false;
 	private volatile boolean isSysLogReceived = false;
 
 	private Channel channel;
-	private int timeout;
+	private volatile int timeout;
 
 	public MiddlewareClientLogRequester(Channel channel)
 	{
@@ -77,7 +77,7 @@ public class MiddlewareClientLogRequester implements Runnable
 			try
 			{
 				int waitTime = 0;
-				while (waitTime < 1000 * DELAY && !isDbLogReceived && !isSysLogReceived)
+				while (waitTime < 1000 * SECONDS_TO_TIMEOUT && !isDbLogReceived && !isSysLogReceived)
 				{
 					Thread.sleep(200);
 					if (Thread.currentThread().isInterrupted())
@@ -89,7 +89,7 @@ public class MiddlewareClientLogRequester implements Runnable
 				}
 
 				// if request has timed out, request again.
-				if (waitTime >= 1000 * DELAY)
+				if (waitTime >= 1000 * SECONDS_TO_TIMEOUT)
 				{
 					isDbLogReceived = true;
 					isSysLogReceived = true;
@@ -98,19 +98,19 @@ public class MiddlewareClientLogRequester implements Runnable
 
 				if (this.timeout >= TIMEOUT)
 				{
-					throw new Exception(String.format("Log request has timed out %d times.", TIMEOUT));
+					throw new Exception(String.format("Log request has timed out for maximum of %d times.", TIMEOUT));
 				}
 
 				if (isDbLogReceived)
 				{
-					Log.debug("Requester sending DB log requests.");
+					Log.debug(String.format("Requester sending SQL performance log requests. (try #%d)", timeout));
 					channel.write(dbLogRequest.retain());
 					channel.flush();
 					isDbLogReceived = false;
 				}
 				if (isSysLogReceived)
 				{
-					Log.debug("Requester sending SYS log requests.");
+					Log.debug(String.format("Requester sending OS/DBMS stat requests. (try #%d)", timeout));
 					channel.write(sysLogRequest.retain());
 					channel.flush();
 					isSysLogReceived = false;
