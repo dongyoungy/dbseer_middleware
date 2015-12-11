@@ -1,7 +1,14 @@
 [dbseer_middleware]
+# port that middleware listens to for the communication with DBSeer
 listen_port=3555
-dblog_path=/home/dyoon/maxscale/dbs.log
+
+# middleware reads the SQL performance log from this file.
+dblog_path=/home/dyoon/maxscale/tpm.log
+
+# middleware writes OS/DBMS statistics to this file.
 syslog_path=/home/dyoon/maxscale/sys.log
+
+# SQL credential necessary for middleware to gather the DBMS statistics (it uses "SHOW GLOBAL STATUS")
 db_host=localhost
 db_port=3400
 db_user=root
