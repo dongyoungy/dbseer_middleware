@@ -1,7 +1,0 @@
-#!/bin/bash
-BIN_PATH=bin
-LIB_PATH=lib
-SRC_PATH=src/dbseer/middleware
-rm -rf $BIN_PATH
-mkdir $BIN_PATH
-javac -cp "$LIB_PATH/*" -d $BIN_PATH $SRC_PATH/*.java
