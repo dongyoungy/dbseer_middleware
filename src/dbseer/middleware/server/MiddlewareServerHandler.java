@@ -109,6 +109,7 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 		}
 		else if (header == MiddlewareConstants.PACKET_REQUEST_DB_LOG)
 		{
+			Thread.sleep(5000);
 			String log = "";
 			ArrayList<String> logs = new ArrayList<String>();
 			server.getDbLogQueue().drainTo(logs);
@@ -125,6 +126,7 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 		}
 		else if (header == MiddlewareConstants.PACKET_REQUEST_SYS_LOG)
 		{
+			Thread.sleep(5000);
 			String log = "";
 			ArrayList<String> logs = new ArrayList<String>();
 			server.getSysLogQueue().drainTo(logs);

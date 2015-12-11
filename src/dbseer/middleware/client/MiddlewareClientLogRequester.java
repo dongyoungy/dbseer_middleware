@@ -27,7 +27,7 @@ import io.netty.channel.Channel;
  */
 public class MiddlewareClientLogRequester implements Runnable
 {
-	private static final int DELAY = 10; // request log every second.
+	private static final int DELAY = 1;
 	private static final int TIMEOUT = 5; // # of allowed timeouts.
 	private volatile boolean isDbLogReceived = false;
 	private volatile boolean isSysLogReceived = false;
