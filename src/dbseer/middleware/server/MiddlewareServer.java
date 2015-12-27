@@ -40,6 +40,7 @@ import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -59,6 +60,8 @@ public class MiddlewareServer
 	private String dbPassword;
 	private String dbHost;
 	private String dbPort;
+	private String sshUser;
+	private String monitorDir;
 
 	private boolean hasConnected;
 	private String remoteHostString;
@@ -75,7 +78,7 @@ public class MiddlewareServer
 
 	private ChannelGroup connectedChannelGroup;
 
-	public MiddlewareServer(int port, String dbLogPath, String sysLogPath, String dbUser, String dbPassword, String dbHost, String dbPort)
+	public MiddlewareServer(int port, String dbLogPath, String sysLogPath, String dbUser, String dbPassword, String dbHost, String dbPort, String sshUser, String monitorDir)
 	{
 		this.port = port;
 		this.dbLogPath = dbLogPath;
@@ -84,6 +87,8 @@ public class MiddlewareServer
 		this.dbPassword = dbPassword;
 		this.dbHost = dbHost;
 		this.dbPort = dbPort;
+		this.sshUser = sshUser;
+		this.monitorDir = monitorDir;
 		this.connectedChannelGroup = new DefaultChannelGroup("all-connected", GlobalEventExecutor.INSTANCE);
 	}
 
@@ -105,6 +110,8 @@ public class MiddlewareServer
 		Log.info(String.format("DB Port = %s", dbPort));
 		Log.info(String.format("DB User = %s", dbUser));
 		Log.info(String.format("DB PW = %s", dbPassword));
+		Log.info(String.format("SSH User = %s", sshUser));
+		Log.info(String.format("Remote Monitor Dir = %s", monitorDir));
 
 		// test MySQL/MariaDB connection using JDBC before we start anything.
 		if (!testMySQLConnection())
@@ -165,8 +172,8 @@ public class MiddlewareServer
 
 		try
 		{
-			// start dstat.
-			runDstat();
+			// start dstat remotely.
+			runDstatRemote();
 
 			// sleep for 1.5 sec
 			Thread.sleep(1500);
@@ -184,13 +191,39 @@ public class MiddlewareServer
 
 	public boolean stopMonitoring()
 	{
-		// stop dstat.
-		dstatProcess.destroy();
+		try
+		{
+			// stop dstat.
+			if (dstatProcess != null && dstatProcess.isAlive())
+			{
+				dstatProcess.destroy();
+			}
 
-		// stop tailers.
-		tailerExecutor.shutdown();
+			// stop tailers.
+			if (tailerExecutor != null)
+			{
+				tailerExecutor.shutdown();
+			}
+
+			Thread.sleep(500);
+		}
+		catch (Exception e)
+		{
+			Log.error("Exception while stopping monitoring: " + e.getMessage());
+			return false;
+		}
 
 		return true;
+	}
+
+	public boolean isMonitoring()
+	{
+		if ((dstatProcess != null && dstatProcess.isAlive()) ||
+				(tailerExecutor != null && tailerExecutor.isTerminated()))
+		{
+			return true;
+		}
+		return false;
 	}
 
 	/*
@@ -206,6 +239,7 @@ public class MiddlewareServer
 		hasConnected = true;
 	}
 
+	// old method to run dstat locally.
 	private void runDstat() throws Exception
 	{
 		if (dstatProcess != null)
@@ -229,6 +263,37 @@ public class MiddlewareServer
 		env.put("DSTAT_OUTPUT_PATH", sysLogPath);
 		dstatProcess = pb.start();
 		Log.debug("dstat started.");
+	}
+
+	// run dstat remotely
+	private void runDstatRemote() throws Exception
+	{
+		if (dstatProcess != null)
+		{
+			dstatProcess.destroy();
+		}
+
+		String sshStartCmd = String.format("ssh %s@%s'", sshUser, dbHost);
+		String sshEndCmd = String.format("cd %s && ./monitor.sh 1> /dev/null'", monitorDir);
+
+		ArrayList<String> cmdList = new ArrayList<String>();
+		cmdList.add(sshStartCmd);
+		cmdList.add(String.format("export DSTAT_MYSQL_USER=%s;", dbUser));
+		cmdList.add(String.format("export DSTAT_MYSQL_PWD=%s;", dbPassword));
+		cmdList.add(String.format("export DSTAT_MYSQL_HOST=%s;", dbHost));
+		cmdList.add(String.format("export DSTAT_MYSQL_PORT=%s;", dbPort));
+		cmdList.add(String.format("export DSTAT_OUTPUT_PATH=%s;", "/dev/fd/2"));
+		cmdList.add(sshEndCmd);
+
+		String[] cmd = (String[]) cmdList.toArray();
+		ProcessBuilder pb = new ProcessBuilder(cmd);
+		File sysLog = new File(sysLogPath);
+
+		pb.redirectErrorStream(true);
+		pb.redirectOutput(ProcessBuilder.Redirect.to(sysLog));
+
+		dstatProcess = pb.start();
+		Log.debug("dstat started remotely.");
 	}
 
 	private void runTailer() throws Exception
@@ -301,7 +366,7 @@ public class MiddlewareServer
 	public static void main(String[] args)
 	{
 		// set up logger
-		Log.set(Log.LEVEL_DEBUG); // DEBUG for now.
+		Log.set(Log.LEVEL_INFO); // DEBUG for now.
 
 		String configPath = "./middleware.cnf";
 		// handle command-line options with commons CLI
@@ -321,8 +386,15 @@ public class MiddlewareServer
 				.desc("print this message")
 				.build();
 
+		Option debugOption = Option.builder("d")
+				.longOpt("debug")
+				.required(false)
+				.desc("print debug messages")
+				.build();
+
 		options.addOption(configOption);
 		options.addOption(helpOption);
+		options.addOption(debugOption);
 
 		HelpFormatter formatter = new HelpFormatter();
 
@@ -330,7 +402,7 @@ public class MiddlewareServer
 		{
 			CommandLine line = clParser.parse(options, args);
 			int port = 3555; // default port
-			String dbLogPath, sysLogPath, dbUser, dbPassword, dbHost, dbPort;
+			String dbLogPath, sysLogPath, dbUser, dbPassword, dbHost, dbPort, sshUser, monitorDir;
 
 			if (line.hasOption("h"))
 			{
@@ -340,6 +412,10 @@ public class MiddlewareServer
 			if (line.hasOption("c"))
 			{
 				configPath = line.getOptionValue("c");
+			}
+			if (line.hasOption("d"))
+			{
+				Log.set(Log.LEVEL_DEBUG);
 			}
 
 			// get configuration
@@ -395,8 +471,18 @@ public class MiddlewareServer
 			{
 				throw new Exception("'db_pw' is missing in the configuration file.");
 			}
+			sshUser = section.get("ssh_user");
+			if (sshUser == null)
+			{
+				throw new Exception("'ssh_user' is missing in the configuration file.");
+			}
+			monitorDir = section.get("monitor_dir");
+			if (monitorDir == null)
+			{
+				throw new Exception("'monitor_dir' is missing in the configuration file.");
+			}
 
-			MiddlewareServer server = new MiddlewareServer(port, dbLogPath, sysLogPath, dbUser, dbPassword, dbHost, dbPort);
+			MiddlewareServer server = new MiddlewareServer(port, dbLogPath, sysLogPath, dbUser, dbPassword, dbHost, dbPort, sshUser, monitorDir);
 			server.run();
 		}
 		catch (ParseException e)

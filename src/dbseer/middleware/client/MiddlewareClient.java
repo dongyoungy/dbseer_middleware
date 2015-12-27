@@ -38,9 +38,9 @@ import java.util.concurrent.Executors;
 /**
  * Created by Dong Young Yoon on 12/1/15.
  *
- * The client for the middleware. Created for testing purposes.
+ * The client for the middleware.
  */
-public class MiddlewareClient
+public class MiddlewareClient implements Runnable
 {
 	private static final int MAX_RETRY = 3;
 
@@ -55,6 +55,9 @@ public class MiddlewareClient
 	private ExecutorService requesterExecutor = null;
 	private MiddlewareClientLogRequester logRequester = null;
 
+	private ExecutorService heartbeatSenderExecutor = null;
+	private MiddlewareClientHeartbeatSender heartbeatSender = null;
+
 	public MiddlewareClient(String host, int port, String sysLogPath, String dbLogPath)
 	{
 		this.retry = 0;
@@ -64,7 +67,12 @@ public class MiddlewareClient
 		this.dbLogPath = dbLogPath;
 	}
 
-	public void run() throws Exception
+	public void setDebug()
+	{
+		Log.set(Log.LEVEL_DEBUG);
+	}
+
+	public void run()
 	{
 		// debug info
 		Log.debug(String.format("host = %s", host));
@@ -72,19 +80,19 @@ public class MiddlewareClient
 		Log.debug(String.format("db log = %s", dbLogPath));
 		Log.debug(String.format("sys log = %s", sysLogPath));
 
-		// set up log files
-		File dbLogFile = new File(dbLogPath);
-		File sysLogFile = new File(sysLogPath);
-		final PrintWriter dbLogWriter = new PrintWriter(new FileWriter(dbLogFile, false));
-		final PrintWriter sysLogWriter = new PrintWriter(new FileWriter(sysLogFile, false));
-
 		// client needs to handle incoming messages from the middleware as well.
 		EventLoopGroup group = new NioEventLoopGroup(4);
 
-		final MiddlewareClient client = this;
-
 		try
 		{
+			// set up log files
+			File dbLogFile = new File(dbLogPath);
+			File sysLogFile = new File(sysLogPath);
+			final PrintWriter dbLogWriter = new PrintWriter(new FileWriter(dbLogFile, false));
+			final PrintWriter sysLogWriter = new PrintWriter(new FileWriter(sysLogFile, false));
+
+			final MiddlewareClient client = this;
+
 			Bootstrap b = new Bootstrap();
 			b.group(group)
 					.channel(NioSocketChannel.class)
@@ -103,9 +111,11 @@ public class MiddlewareClient
 			channel = f.channel();
 			Log.debug("Connected to the middleware.");
 
-			startMonitoring();
-
 			channel.closeFuture().sync();
+		}
+		catch (Exception e)
+		{
+			Log.error(e.getMessage());
 		}
 		finally
 		{
@@ -141,6 +151,15 @@ public class MiddlewareClient
 		retry++;
 	}
 
+	public void stopMonitoring() throws Exception
+	{
+		ByteBuf b = Unpooled.buffer();
+		b.writeInt(MiddlewareConstants.PACKET_STOP_MONITORING);
+		b.writeInt(0);
+		channel.writeAndFlush(b);
+		Log.debug("Stop monitoring packet sent.");
+	}
+
 	public void startRequester() throws Exception
 	{
 		logRequester = new MiddlewareClientLogRequester(channel);
@@ -149,84 +168,12 @@ public class MiddlewareClient
 		Log.debug("Log requester launched.");
 	}
 
-	public static void main(String[] args)
+	public void startHeartbeatSender() throws Exception
 	{
-		// set up logger
-		Log.set(Log.LEVEL_DEBUG);
-
-		// handle command-line options
-		CommandLineParser clParser = new DefaultParser();
-		Options options = new Options();
-
-		Option hostOption = Option.builder("h")
-				.hasArg()
-				.argName("HOST")
-				.required(true)
-				.desc("middleware hostname")
-				.build();
-
-		Option portOption = Option.builder("p")
-				.hasArg()
-				.argName("PORT")
-				.required(true)
-				.desc("middleware port")
-				.build();
-
-		Option sysLogOption = Option.builder("s")
-				.hasArg()
-				.argName("FILE")
-				.required(true)
-				.desc("file to print system log")
-				.build();
-
-		Option dbLogOption = Option.builder("d")
-				.hasArg()
-				.argName("FILE")
-				.required(true)
-				.desc("file to print database log")
-				.build();
-
-		Option helpOption = Option.builder("?")
-				.longOpt("help")
-				.required(false)
-				.desc("print this message")
-				.build();
-
-		options.addOption(hostOption);
-		options.addOption(portOption);
-		options.addOption(sysLogOption);
-		options.addOption(dbLogOption);
-		options.addOption(helpOption);
-
-		HelpFormatter formatter = new HelpFormatter();
-		try
-		{
-			CommandLine line = clParser.parse(options, args);
-			if (line.hasOption("?"))
-			{
-				formatter.printHelp("MiddlewareClient", options, true);
-				return;
-			}
-
-			int port;
-			String host, sysLogPath, dbLogPath;
-
-			port = Integer.parseInt(line.getOptionValue("p"));
-			host = line.getOptionValue("h");
-			sysLogPath = line.getOptionValue("s");
-			dbLogPath = line.getOptionValue("d");
-
-			MiddlewareClient client = new MiddlewareClient(host, port, sysLogPath, dbLogPath);
-			client.run();
-		}
-		catch (ParseException e)
-		{
-			formatter.printHelp("MiddlewareClient", options, true);
-			Log.error(e.getMessage());
-		}
-		catch (Exception e)
-		{
-			Log.error(e.getMessage());
-		}
+		heartbeatSender = new MiddlewareClientHeartbeatSender(channel);
+		heartbeatSenderExecutor = Executors.newSingleThreadExecutor();
+		heartbeatSenderExecutor.submit(heartbeatSender);
+		Log.debug("heartbeat sender launched.");
 	}
+
 }

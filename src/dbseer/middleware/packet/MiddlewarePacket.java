@@ -23,12 +23,12 @@ public class MiddlewarePacket
 {
 	public int header;
 	public int length;
-	public String log;
+	public String body;
 
-	public MiddlewarePacket(int header, int length, String log)
+	public MiddlewarePacket(int header, int length, String body)
 	{
 		this.header = header;
 		this.length = length;
-		this.log = log;
+		this.body = body;
 	}
 }

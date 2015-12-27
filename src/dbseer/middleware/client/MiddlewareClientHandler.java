@@ -53,6 +53,8 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 			Log.debug("start monitoring succeeded.");
 			// spawn log requester
 			client.startRequester();
+			// start heartbeat sender
+			client.startHeartbeatSender();
 		}
 		else if (header == MiddlewareConstants.PACKET_START_MONITORING_FAILURE)
 		{
@@ -60,11 +62,19 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 			// retry monitoring
 			client.startMonitoring();
 		}
+		else if (header == MiddlewareConstants.PACKET_STOP_MONITORING_SUCCESS)
+		{
+			Log.debug("stop monitoring succeeded.");
+		}
+		else if (header == MiddlewareConstants.PACKET_STOP_MONITORING_FAILURE)
+		{
+			Log.debug("stop monitoring failed.");
+		}
 		else if (header == MiddlewareConstants.PACKET_DB_LOG)
 		{
 			Log.debug("received db log.");
 			// write db log.
-			dbLogWriter.write(packet.log);
+			dbLogWriter.write(packet.body);
 			dbLogWriter.flush();
 			client.getLogRequester().dbLogReceived();
 		}
@@ -72,7 +82,7 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 		{
 			Log.debug("received sys log.");
 			// write sys log.
-			sysLogWriter.write(packet.log);
+			sysLogWriter.write(packet.body);
 			sysLogWriter.flush();
 			client.getLogRequester().sysLogReceived();
 		}

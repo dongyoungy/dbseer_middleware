@@ -22,13 +22,23 @@ package dbseer.middleware.constant;
 public class MiddlewareConstants
 {
 	public static final int QUEUE_SIZE = 1800; // equi. 30 min logs
+	public static final String PROTOCOL_VERSION = "v0.1";
 
-	public static final int PACKET_START_MONITORING = 1;
-	public static final int PACKET_START_MONITORING_SUCCESS = 11;
-	public static final int PACKET_START_MONITORING_FAILURE = 12;
-	public static final int PACKET_REQUEST_DB_LOG = 2;
-	public static final int PACKET_DB_LOG = 21;
-	public static final int PACKET_REQUEST_SYS_LOG = 3;
-	public static final int PACKET_SYS_LOG = 31;
-	public static final int PACKET_CONNECTION_DENIED = 4;
+	public static final int PACKET_PING = 0;
+	public static final int PACKET_CHECK_VERSION = 10;
+	public static final int PACKET_CHECK_VERSION_SUCCESS = 11;
+	public static final int PACKET_CHECK_VERSION_FAILURE = 12;
+
+	public static final int PACKET_START_MONITORING = 100;
+	public static final int PACKET_START_MONITORING_SUCCESS = 101;
+	public static final int PACKET_START_MONITORING_FAILURE = 102;
+	public static final int PACKET_STOP_MONITORING = 103;
+	public static final int PACKET_STOP_MONITORING_SUCCESS = 104;
+	public static final int PACKET_STOP_MONITORING_FAILURE = 105;
+
+	public static final int PACKET_REQUEST_DB_LOG = 200;
+	public static final int PACKET_DB_LOG = 201;
+	public static final int PACKET_REQUEST_SYS_LOG = 300;
+	public static final int PACKET_SYS_LOG = 301;
+	public static final int PACKET_CONNECTION_DENIED = 400;
 }

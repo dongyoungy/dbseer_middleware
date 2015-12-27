@@ -93,19 +93,65 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 
 		if (header == MiddlewareConstants.PACKET_START_MONITORING)
 		{
+			Log.debug("start monitoring");
+			// stop monitoring if it is running.
+			server.stopMonitoring();
+
 			boolean isStarted;
 			isStarted = server.startMonitoring();
 			ByteBuf ans = Unpooled.buffer();
 			if (isStarted)
 			{
+				Log.debug("start monitoring success");
 				ans.writeInt(MiddlewareConstants.PACKET_START_MONITORING_SUCCESS);
 			}
 			else
 			{
+				Log.debug("start monitoring failure");
 				ans.writeInt(MiddlewareConstants.PACKET_START_MONITORING_FAILURE);
 			}
 			ans.writeInt(0);
 			ctx.writeAndFlush(ans);
+		}
+		else if (header == MiddlewareConstants.PACKET_STOP_MONITORING)
+		{
+			Log.debug("stop monitoring");
+			// stop monitoring
+			server.stopMonitoring();
+
+			ByteBuf ans = Unpooled.buffer();
+			// check monitoring
+			if (server.isMonitoring())
+			{
+				Log.debug("stop monitoring failure");
+				ans.writeInt(MiddlewareConstants.PACKET_STOP_MONITORING_FAILURE);
+				ans.writeInt(0);
+			}
+			else
+			{
+				Log.debug("stop monitoring success");
+				ans.writeInt(MiddlewareConstants.PACKET_STOP_MONITORING_SUCCESS);
+				ans.writeInt(0);
+			}
+			ctx.writeAndFlush(ans);
+		}
+		else if (header == MiddlewareConstants.PACKET_CHECK_VERSION)
+		{
+			String clientVersion = packet.body;
+			ByteBuf ans = Unpooled.buffer();
+			if (clientVersion.equalsIgnoreCase(MiddlewareConstants.PROTOCOL_VERSION))
+			{
+				ans.writeInt(MiddlewareConstants.PACKET_CHECK_VERSION_SUCCESS);
+				ans.writeInt(0);
+			}
+			else
+			{
+				ans.writeInt(MiddlewareConstants.PACKET_CHECK_VERSION_FAILURE);
+				ans.writeInt(MiddlewareConstants.PROTOCOL_VERSION.getBytes("UTF-8").length);
+				ans.writeBytes(MiddlewareConstants.PROTOCOL_VERSION.getBytes("UTF-8"));
+			}
+			ctx.writeAndFlush(ans);
+			Log.debug("check version sent");
 		}
 		else if (header == MiddlewareConstants.PACKET_REQUEST_DB_LOG)
 		{
