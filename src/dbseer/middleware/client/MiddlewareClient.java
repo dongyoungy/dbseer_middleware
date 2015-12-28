@@ -120,10 +120,7 @@ public class MiddlewareClient implements Runnable
 		finally
 		{
 			group.shutdownGracefully();
-			if (requesterExecutor != null)
-			{
-				requesterExecutor.shutdownNow();
-			}
+			this.stopExecutors();
 		}
 	}
 
@@ -153,6 +150,7 @@ public class MiddlewareClient implements Runnable
 
 	public void stopMonitoring() throws Exception
 	{
+		this.stopExecutors();
 		ByteBuf b = Unpooled.buffer();
 		b.writeInt(MiddlewareConstants.PACKET_STOP_MONITORING);
 		b.writeInt(0);
@@ -174,6 +172,18 @@ public class MiddlewareClient implements Runnable
 		heartbeatSenderExecutor = Executors.newSingleThreadExecutor();
 		heartbeatSenderExecutor.submit(heartbeatSender);
 		Log.debug("heartbeat sender launched.");
+	}
+
+	public void stopExecutors()
+	{
+		if (requesterExecutor != null)
+		{
+			requesterExecutor.shutdownNow();
+		}
+		if (heartbeatSenderExecutor != null)
+		{
+			heartbeatSenderExecutor.shutdownNow();
+		}
 	}
 
 }
