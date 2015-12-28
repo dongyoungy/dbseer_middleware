@@ -276,18 +276,17 @@ public class MiddlewareServer
 		String sshStartCmd = String.format("ssh %s@%s'", sshUser, dbHost);
 		String sshEndCmd = String.format("cd %s && ./monitor.sh 1> /dev/null'", monitorDir);
 
-		ArrayList<String> cmdList = new ArrayList<String>();
-		cmdList.add(sshStartCmd);
-		cmdList.add(String.format("export DSTAT_MYSQL_USER=%s;", dbUser));
-		cmdList.add(String.format("export DSTAT_MYSQL_PWD=%s;", dbPassword));
-		cmdList.add(String.format("export DSTAT_MYSQL_HOST=%s;", dbHost));
-		cmdList.add(String.format("export DSTAT_MYSQL_PORT=%s;", dbPort));
-		cmdList.add(String.format("export DSTAT_OUTPUT_PATH=%s;", "/dev/fd/2"));
-		cmdList.add(sshEndCmd);
+		String cmd = "";
+		cmd += sshStartCmd;
+		cmd += String.format("export DSTAT_MYSQL_USER=%s;", dbUser);
+		cmd += String.format("export DSTAT_MYSQL_PWD=%s;", dbPassword);
+		cmd += String.format("export DSTAT_MYSQL_HOST=%s;", dbHost);
+		cmd += String.format("export DSTAT_MYSQL_PORT=%s;", dbPort);
+		cmd += String.format("export DSTAT_OUTPUT_PATH=%s;", "/dev/fd/2");
+		cmd += sshEndCmd;
 
-		String[] cmd = new String[cmdList.size()];
-		cmd = cmdList.toArray(cmd);
-		
+		Log.debug("Executing command: " + cmd);
+
 		ProcessBuilder pb = new ProcessBuilder(cmd);
 		File sysLog = new File(sysLogPath);
 
