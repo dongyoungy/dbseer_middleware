@@ -136,7 +136,7 @@ public class MiddlewareClient implements Runnable
 
 	public void startMonitoring() throws Exception
 	{
-		if (retry > MAX_RETRY)
+		if (retry >= MAX_RETRY)
 		{
 			throw new Exception(String.format("Middleware failed to start with %d retries", MAX_RETRY));
 		}
@@ -178,11 +178,11 @@ public class MiddlewareClient implements Runnable
 	{
 		if (requesterExecutor != null)
 		{
-			requesterExecutor.shutdownNow();
+			requesterExecutor.shutdown();
 		}
 		if (heartbeatSenderExecutor != null)
 		{
-			heartbeatSenderExecutor.shutdownNow();
+			heartbeatSenderExecutor.shutdown();
 		}
 	}
 
