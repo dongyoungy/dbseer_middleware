@@ -178,11 +178,11 @@ public class MiddlewareClient implements Runnable
 	{
 		if (requesterExecutor != null)
 		{
-			requesterExecutor.shutdown();
+			requesterExecutor.shutdownNow();
 		}
 		if (heartbeatSenderExecutor != null)
 		{
-			heartbeatSenderExecutor.shutdown();
+			heartbeatSenderExecutor.shutdownNow();
 		}
 	}
 
