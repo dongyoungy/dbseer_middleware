@@ -99,9 +99,6 @@ public class MiddlewareServer
 
 	public void run() throws Exception
 	{
-		// set logger
-		Log.set(Log.LEVEL_INFO);
-
 		// basic log info.
 		Log.info(String.format("Listening port = %d", port));
 		Log.info(String.format("DB log path = %s", dbLogPath));
