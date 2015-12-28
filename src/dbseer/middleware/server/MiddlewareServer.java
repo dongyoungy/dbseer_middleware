@@ -276,7 +276,8 @@ public class MiddlewareServer
 		String sshStartCmd = String.format("%s@%s '", sshUser, dbHost);
 		String sshEndCmd = String.format("cd %s && ./monitor.sh 1> /dev/null'", monitorDir);
 
-		String cmd = "ssh ";
+		String sshCmd = "ssh";
+		String cmd = "";
 		cmd += sshStartCmd;
 		cmd += String.format("export DSTAT_MYSQL_USER=%s;", dbUser);
 		cmd += String.format("export DSTAT_MYSQL_PWD=%s;", dbPassword);
@@ -287,7 +288,9 @@ public class MiddlewareServer
 
 		Log.debug("Executing command: " + cmd);
 
-		ProcessBuilder pb = new ProcessBuilder(cmd);
+		String[] cmds = {sshCmd, cmd};
+
+		ProcessBuilder pb = new ProcessBuilder(cmds);
 		File sysLog = new File(sysLogPath);
 
 		pb.redirectErrorStream(true);
