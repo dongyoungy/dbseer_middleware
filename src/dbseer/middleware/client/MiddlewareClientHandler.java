@@ -91,6 +91,15 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 			Log.debug("connection denied");
 			client.getChannel().close().sync();
 		}
+		else if (header == MiddlewareConstants.PACKET_CHECK_VERSION_SUCCESS)
+		{
+			Log.debug("check version succeeded.");
+		}
+		else if (header == MiddlewareConstants.PACKET_CHECK_VERSION_FAILURE)
+		{
+			Log.debug("check version failed.");
+			client.getChannel().close().sync();
+		}
 		else if (header == MiddlewareConstants.PACKET_PING)
 		{
 			Log.debug("heartbeat received.");

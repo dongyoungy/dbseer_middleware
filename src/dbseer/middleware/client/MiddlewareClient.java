@@ -111,6 +111,12 @@ public class MiddlewareClient implements Runnable
 			channel = f.channel();
 			Log.debug("Connected to the middleware.");
 
+			ByteBuf buf = Unpooled.buffer();
+			buf.writeInt(MiddlewareConstants.PACKET_CHECK_VERSION);
+			buf.writeInt(MiddlewareConstants.PROTOCOL_VERSION.getBytes("UTF-8").length);
+			buf.writeBytes(MiddlewareConstants.PROTOCOL_VERSION.getBytes("UTF-8"));
+			channel.writeAndFlush(buf);
+
 			channel.closeFuture().sync();
 		}
 		catch (Exception e)
