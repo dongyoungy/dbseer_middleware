@@ -273,10 +273,10 @@ public class MiddlewareServer
 			dstatProcess.destroy();
 		}
 
-		String sshStartCmd = String.format("ssh %s@%s '", sshUser, dbHost);
+		String sshStartCmd = String.format("%s@%s '", sshUser, dbHost);
 		String sshEndCmd = String.format("cd %s && ./monitor.sh 1> /dev/null'", monitorDir);
 
-		String cmd = "";
+		String cmd = "ssh ";
 		cmd += sshStartCmd;
 		cmd += String.format("export DSTAT_MYSQL_USER=%s;", dbUser);
 		cmd += String.format("export DSTAT_MYSQL_PWD=%s;", dbPassword);
