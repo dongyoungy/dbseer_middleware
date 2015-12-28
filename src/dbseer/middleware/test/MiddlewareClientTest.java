@@ -102,7 +102,7 @@ public class MiddlewareClientTest
 			dbLogPath = line.getOptionValue("d");
 
 			MiddlewareClient client = new MiddlewareClient(host, port, sysLogPath, dbLogPath);
-			client.setDebug();
+			client.setLogLevel(Log.LEVEL_DEBUG);
 
 			Future clientFuture = clientExecutor.submit(client);
 			Thread.sleep(1000);

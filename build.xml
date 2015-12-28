@@ -195,6 +195,8 @@
     <!-- Perform any build initialization in this target -->
 		<property name="src" value="src" />
 		<property name="bin" value="bin" />
+		<property name="lib" value="lib" />
+		<property name="middleware_version" value="0.1" />
   </target>
 
 	<target name="clean" depends="init">
@@ -210,6 +212,12 @@
       <bootclasspath refid="dbseer_middleware.module.bootclasspath"/>
       <classpath refid="dbseer_middleware.module.production.classpath"/>
 		</javac>
+	</target>
+
+	<target name="jar" depends="compile">
+		<jar destfile="dbseer-middleware-${middleware_version}.jar" basedir="${bin}">
+			<zipgroupfileset dir="${lib}" includes="*.jar"/>
+		</jar>
 	</target>
   
   <target name="clean.module" depends="clean.module.dbseer_middleware" description="cleanup all"/>

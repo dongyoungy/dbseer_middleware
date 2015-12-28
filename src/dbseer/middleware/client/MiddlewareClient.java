@@ -67,9 +67,9 @@ public class MiddlewareClient implements Runnable
 		this.dbLogPath = dbLogPath;
 	}
 
-	public void setDebug()
+	public void setLogLevel(int level)
 	{
-		Log.set(Log.LEVEL_DEBUG);
+		Log.set(level);
 	}
 
 	public void run()
@@ -162,6 +162,9 @@ public class MiddlewareClient implements Runnable
 		b.writeInt(0);
 		channel.writeAndFlush(b);
 		Log.debug("Stop monitoring packet sent.");
+
+		// reset retry count.
+		retry = 0;
 	}
 
 	public void startRequester() throws Exception
