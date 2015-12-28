@@ -285,7 +285,9 @@ public class MiddlewareServer
 		cmdList.add(String.format("export DSTAT_OUTPUT_PATH=%s;", "/dev/fd/2"));
 		cmdList.add(sshEndCmd);
 
-		String[] cmd = (String[]) cmdList.toArray();
+		String[] cmd = new String[cmdList.size()];
+		cmd = cmdList.toArray(cmd);
+		
 		ProcessBuilder pb = new ProcessBuilder(cmd);
 		File sysLog = new File(sysLogPath);
 
