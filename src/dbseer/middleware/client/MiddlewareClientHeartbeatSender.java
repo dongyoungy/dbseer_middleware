@@ -63,6 +63,12 @@ public class MiddlewareClientHeartbeatSender implements Runnable
 				channel.write(heartbeat.retain());
 				channel.flush();
 			}
+			catch (InterruptedException e)
+			{
+				// Do nothing here.
+				Log.debug(this.getClass().getCanonicalName(), "InterruptedException caught while sleeping: " + e.getMessage());
+				return;
+			}
 			catch (Exception e)
 			{
 				Log.error(this.getClass().getCanonicalName(), "Exception caught while sending heartbeats: " + e.getMessage());

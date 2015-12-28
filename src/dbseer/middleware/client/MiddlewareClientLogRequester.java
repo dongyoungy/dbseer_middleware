@@ -120,6 +120,7 @@ public class MiddlewareClientLogRequester implements Runnable
 			{
 				// Do nothing here.
 				Log.debug(this.getClass().getCanonicalName(), "InterruptedException caught while sleeping: " + e.getMessage());
+				return;
 			}
 			catch (Exception e)
 			{
