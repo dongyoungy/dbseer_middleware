@@ -273,7 +273,7 @@ public class MiddlewareServer
 			dstatProcess.destroy();
 		}
 
-		String sshStartCmd = String.format("ssh %s@%s'", sshUser, dbHost);
+		String sshStartCmd = String.format("ssh %s@%s '", sshUser, dbHost);
 		String sshEndCmd = String.format("cd %s && ./monitor.sh 1> /dev/null'", monitorDir);
 
 		String cmd = "";
