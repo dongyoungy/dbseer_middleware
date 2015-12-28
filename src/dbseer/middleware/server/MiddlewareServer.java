@@ -273,12 +273,11 @@ public class MiddlewareServer
 			dstatProcess.destroy();
 		}
 
-		String sshStartCmd = String.format("%s@%s '", sshUser, dbHost);
 		String sshEndCmd = String.format("cd %s && ./monitor.sh 1> /dev/null'", monitorDir);
 
 		String sshCmd = "ssh";
-		String cmd = "";
-		cmd += sshStartCmd;
+		String sshConnection = String.format("%s@%s", sshUser, dbHost);
+		String cmd = "'";
 		cmd += String.format("export DSTAT_MYSQL_USER=%s;", dbUser);
 		cmd += String.format("export DSTAT_MYSQL_PWD=%s;", dbPassword);
 		cmd += String.format("export DSTAT_MYSQL_HOST=%s;", dbHost);
@@ -286,9 +285,7 @@ public class MiddlewareServer
 		cmd += String.format("export DSTAT_OUTPUT_PATH=%s;", "/dev/fd/2");
 		cmd += sshEndCmd;
 
-		Log.debug("Executing command: " + cmd);
-
-		String[] cmds = {sshCmd, cmd};
+		String[] cmds = {sshCmd, sshConnection, cmd};
 
 		ProcessBuilder pb = new ProcessBuilder(cmds);
 		File sysLog = new File(sysLogPath);

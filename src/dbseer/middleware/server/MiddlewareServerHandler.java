@@ -113,6 +113,13 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			ans.writeInt(0);
 			ctx.writeAndFlush(ans);
 		}
+		else if (header == MiddlewareConstants.PACKET_PING)
+		{
+			ByteBuf ans = Unpooled.buffer();
+			ans.writeInt(MiddlewareConstants.PACKET_PING);
+			ans.writeInt(0);
+			ctx.writeAndFlush(ans);
+		}
 		else if (header == MiddlewareConstants.PACKET_STOP_MONITORING)
 		{
 			Log.debug("stop monitoring");
