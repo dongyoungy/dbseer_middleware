@@ -208,7 +208,7 @@ public class MiddlewareServer
 			tailerExecutor.shutdownNow();
 		}
 
-		dbLogFile = new File(dbLogPath + File.separator + "db.log");
+		dbLogFile = new File(dbLogPath);
 
 		// discard first line for db log because of a possible truncates.
 		LogTailerListener dbLogListener = new LogTailerListener(dbLogQueue, true);
@@ -317,10 +317,10 @@ public class MiddlewareServer
 			{
 				port = Integer.parseInt(portStr);
 			}
-			dbLogPath = section.get("dblog_dir");
+			dbLogPath = section.get("dblog_path");
 			if (dbLogPath == null)
 			{
-				throw new Exception("'dblog_dir' is missing in the configuration file.");
+				throw new Exception("'dblog_path' is missing in the configuration file.");
 			}
 			sysLogPath = section.get("syslog_dir");
 			if (sysLogPath == null)
