@@ -169,7 +169,7 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			ctx.writeAndFlush(ans);
 			Log.debug("server list sent");
 		}
-		else if (header == MiddlewareConstants.PACKET_REQUEST_DB_LOG)
+		else if (header == MiddlewareConstants.PACKET_REQUEST_TX_LOG)
 		{
 			String log = "";
 			ArrayList<String> logs = new ArrayList<String>();
@@ -179,7 +179,7 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 				log += aLog;
 			}
 			ByteBuf ans = Unpooled.buffer(8 + log.getBytes("UTF-8").length);
-			ans.writeInt(MiddlewareConstants.PACKET_DB_LOG);
+			ans.writeInt(MiddlewareConstants.PACKET_TX_LOG);
 			ans.writeInt(log.getBytes("UTF-8").length);
 			ans.writeBytes(log.getBytes("UTF-8"));
 			ctx.writeAndFlush(ans);

@@ -25,6 +25,8 @@ public class MiddlewareConstants
 	public static final String PROTOCOL_VERSION = "v0.1";
 
 	public static final String SERVER_STRING_DELIMITER = ",";
+	public static final String TX_LOG_PREFIX = "tx.log";
+	public static final String SYS_LOG_PREFIX = "sys.log";
 
 	public static final int PACKET_PING = 0;
 	public static final int PACKET_CHECK_VERSION = 10;
@@ -38,8 +40,8 @@ public class MiddlewareConstants
 	public static final int PACKET_STOP_MONITORING_SUCCESS = 104;
 	public static final int PACKET_STOP_MONITORING_FAILURE = 105;
 
-	public static final int PACKET_REQUEST_DB_LOG = 200;
-	public static final int PACKET_DB_LOG = 201;
+	public static final int PACKET_REQUEST_TX_LOG = 200;
+	public static final int PACKET_TX_LOG = 201;
 	public static final int PACKET_REQUEST_SYS_LOG = 300;
 	public static final int PACKET_SYS_LOG = 301;
 	public static final int PACKET_CONNECTION_DENIED = 400;

@@ -28,7 +28,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
-import org.apache.commons.cli.*;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -61,7 +60,7 @@ public class MiddlewareClient extends Observable implements Runnable
 	private ExecutorService heartbeatSenderExecutor = null;
 	private MiddlewareClientHeartbeatSender heartbeatSender = null;
 
-	private MiddlewareClientLogRequester dbLogRequester = null;
+	private MiddlewareClientLogRequester txLogRequester = null;
 	private Map<String, MiddlewareClientLogRequester> sysLogRequester = null;
 
 	public MiddlewareClient(String host, int port, String logPath)
@@ -150,9 +149,9 @@ public class MiddlewareClient extends Observable implements Runnable
 		return channel;
 	}
 
-	public MiddlewareClientLogRequester getDbLogRequester()
+	public MiddlewareClientLogRequester getTxLogRequester()
 	{
-		return dbLogRequester;
+		return txLogRequester;
 	}
 
 	public MiddlewareClientLogRequester getSysLogRequester(String server)
@@ -206,21 +205,21 @@ public class MiddlewareClient extends Observable implements Runnable
 		Log.debug("Server list request packet sent.");
 	}
 
-	public PrintWriter startDbLogRequester() throws Exception
+	public PrintWriter startTxLogRequester() throws Exception
 	{
 		if (requesterExecutor == null)
 		{
 			requesterExecutor = Executors.newCachedThreadPool();
 		}
-		dbLogRequester =
-				new MiddlewareClientLogRequester(channel, MiddlewareConstants.PACKET_REQUEST_DB_LOG);
+		txLogRequester =
+				new MiddlewareClientLogRequester(channel, MiddlewareConstants.PACKET_REQUEST_TX_LOG);
 
-		requesterExecutor.submit(dbLogRequester);
+		requesterExecutor.submit(txLogRequester);
 
-		File dbLogFile = new File(logPath + File.separator + "db.log");
+		File dbLogFile = new File(logPath + File.separator + MiddlewareConstants.TX_LOG_PREFIX);
 		PrintWriter writer = new PrintWriter(new FileWriter(dbLogFile, false));
 
-		Log.debug("DB Log requester launched.");
+		Log.debug("Tx Log requester launched.");
 
 		return writer;
 	}
@@ -242,7 +241,7 @@ public class MiddlewareClient extends Observable implements Runnable
 			requesterExecutor.submit(logRequester);
 			sysLogRequester.put(server, logRequester);
 
-			File sysLogFile = new File(logPath + File.separator + "sys.log." + server);
+			File sysLogFile = new File(logPath + File.separator + MiddlewareConstants.SYS_LOG_PREFIX + "." + server);
 			PrintWriter writer = new PrintWriter(new FileWriter(sysLogFile, false));
 			writers.put(server, writer);
 		}
@@ -270,7 +269,7 @@ public class MiddlewareClient extends Observable implements Runnable
 		{
 			heartbeatSenderExecutor.shutdownNow();
 		}
-		dbLogRequester = null;
+		txLogRequester = null;
 		sysLogRequester = new HashMap<>();
 	}
 

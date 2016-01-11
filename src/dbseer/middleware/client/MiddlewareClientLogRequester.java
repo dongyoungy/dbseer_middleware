@@ -129,7 +129,7 @@ public class MiddlewareClientLogRequester implements Runnable
 
 				if (isLogReceived)
 				{
-					if (packetHeader == MiddlewareConstants.PACKET_REQUEST_DB_LOG)
+					if (packetHeader == MiddlewareConstants.PACKET_REQUEST_TX_LOG)
 					{
 						Log.debug(String.format("Requester sending SQL performance log requests. (try #%d)", timeout));
 					}

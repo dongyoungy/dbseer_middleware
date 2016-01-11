@@ -77,7 +77,7 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 			String serverStr = packet.body;
 
 			// spawn log requester
-			dbWriter = client.startDbLogRequester();
+			dbWriter = client.startTxLogRequester();
 			sysWriter = client.startSysLogRequester(serverStr);
 
 			// start heartbeat sender
@@ -85,13 +85,13 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 			// set monitoring to true
 			client.setMonitoring(true);
 		}
-		else if (header == MiddlewareConstants.PACKET_DB_LOG)
+		else if (header == MiddlewareConstants.PACKET_TX_LOG)
 		{
 			Log.debug("received db log.");
 			// write db log.
 			dbWriter.write(packet.body);
 			dbWriter.flush();
-			client.getDbLogRequester().logReceived();
+			client.getTxLogRequester().logReceived();
 		}
 		else if (header == MiddlewareConstants.PACKET_SYS_LOG)
 		{
