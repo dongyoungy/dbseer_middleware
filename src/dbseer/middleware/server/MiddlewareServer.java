@@ -85,8 +85,8 @@ public class MiddlewareServer
 	{
 		// basic log info.
 		Log.info(String.format("Listening port = %d", port));
-		Log.info(String.format("DB log path = %s", dbLogPath));
-		Log.info(String.format("System log path = %s", sysLogPath));
+		Log.info(String.format("DB log dir = %s", dbLogPath));
+		Log.info(String.format("System log dir = %s", sysLogPath));
 
 		// print server info.
 		for (Server s : servers.values())
@@ -208,7 +208,7 @@ public class MiddlewareServer
 			tailerExecutor.shutdownNow();
 		}
 
-		dbLogFile = new File(dbLogPath);
+		dbLogFile = new File(dbLogPath + File.separator + "db.log");
 
 		// discard first line for db log because of a possible truncates.
 		LogTailerListener dbLogListener = new LogTailerListener(dbLogQueue, true);
@@ -317,15 +317,15 @@ public class MiddlewareServer
 			{
 				port = Integer.parseInt(portStr);
 			}
-			dbLogPath = section.get("dblog_path");
+			dbLogPath = section.get("dblog_dir");
 			if (dbLogPath == null)
 			{
-				throw new Exception("'dblog_path' is missing in the configuration file.");
+				throw new Exception("'dblog_dir' is missing in the configuration file.");
 			}
-			sysLogPath = section.get("syslog_path");
+			sysLogPath = section.get("syslog_dir");
 			if (sysLogPath == null)
 			{
-				throw new Exception("'syslog_path' is missing in the configuration file.");
+				throw new Exception("'syslog_dir' is missing in the configuration file.");
 			}
 			String serverStr = section.get("servers");
 			if (serverStr == null)

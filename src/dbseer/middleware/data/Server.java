@@ -138,7 +138,7 @@ public class Server
 		String[] cmds = {sshCmd, sshConnection, cmd};
 
 		ProcessBuilder pb = new ProcessBuilder(cmds);
-		logFile = new File(logPath + File.separator + String.format("sys_%s.log", name));
+		logFile = new File(logPath + File.separator + String.format("sys.log.%s", name));
 
 		pb.redirectErrorStream(true);
 		pb.redirectOutput(ProcessBuilder.Redirect.to(logFile));
