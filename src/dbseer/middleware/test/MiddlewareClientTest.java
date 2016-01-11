@@ -57,18 +57,11 @@ public class MiddlewareClientTest
 				.desc("middleware port")
 				.build();
 
-		Option sysLogOption = Option.builder("s")
+		Option logOption = Option.builder("d")
 				.hasArg()
 				.argName("FILE")
 				.required(true)
-				.desc("file to print system log")
-				.build();
-
-		Option dbLogOption = Option.builder("d")
-				.hasArg()
-				.argName("FILE")
-				.required(true)
-				.desc("file to print database log")
+				.desc("path to print logs")
 				.build();
 
 		Option helpOption = Option.builder("?")
@@ -79,8 +72,7 @@ public class MiddlewareClientTest
 
 		options.addOption(hostOption);
 		options.addOption(portOption);
-		options.addOption(sysLogOption);
-		options.addOption(dbLogOption);
+		options.addOption(logOption);
 		options.addOption(helpOption);
 
 		HelpFormatter formatter = new HelpFormatter();
@@ -94,14 +86,13 @@ public class MiddlewareClientTest
 			}
 
 			int port;
-			String host, sysLogPath, dbLogPath;
+			String host, logPath;
 
 			port = Integer.parseInt(line.getOptionValue("p"));
 			host = line.getOptionValue("h");
-			sysLogPath = line.getOptionValue("s");
-			dbLogPath = line.getOptionValue("d");
+			logPath = line.getOptionValue("d");
 
-			MiddlewareClient client = new MiddlewareClient(host, port, sysLogPath, dbLogPath);
+			MiddlewareClient client = new MiddlewareClient(host, port, logPath);
 			client.setLogLevel(Log.LEVEL_DEBUG);
 
 			Future clientFuture = clientExecutor.submit(client);
