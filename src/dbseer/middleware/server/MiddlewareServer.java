@@ -18,6 +18,7 @@ package dbseer.middleware.server;
 
 import com.esotericsoftware.minlog.Log;
 import dbseer.middleware.constant.MiddlewareConstants;
+import dbseer.middleware.data.Server;
 import dbseer.middleware.log.LogTailer;
 import dbseer.middleware.log.LogTailerListener;
 import dbseer.middleware.packet.MiddlewarePacketDecoder;
@@ -36,11 +37,8 @@ import org.ini4j.Ini;
 
 import java.io.File;
 import java.io.FileReader;
-import java.net.InetSocketAddress;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -56,39 +54,25 @@ public class MiddlewareServer
 	private int port;
 	private String dbLogPath;
 	private String sysLogPath;
-	private String dbUser;
-	private String dbPassword;
-	private String dbHost;
-	private String dbPort;
-	private String sshUser;
-	private String monitorDir;
+	private boolean monitoring;
 
-	private boolean hasConnected;
-	private String remoteHostString;
+	private Map<String, Server> servers;
 
 	private File dbLogFile = null;
-	private File sysLogFile = null;
-	private Process dstatProcess = null;
 	private ExecutorService tailerExecutor = null;
 	private LogTailer dbLogTailer = null;
-	private LogTailer sysLogTailer = null;
 
 	private ArrayBlockingQueue<String> dbLogQueue;
-	private ArrayBlockingQueue<String> sysLogQueue;
 
 	private ChannelGroup connectedChannelGroup;
 
-	public MiddlewareServer(int port, String dbLogPath, String sysLogPath, String dbUser, String dbPassword, String dbHost, String dbPort, String sshUser, String monitorDir)
+	public MiddlewareServer(int port, String dbLogPath, String sysLogPath, Map<String, Server> servers)
 	{
 		this.port = port;
 		this.dbLogPath = dbLogPath;
 		this.sysLogPath = sysLogPath;
-		this.dbUser = dbUser;
-		this.dbPassword = dbPassword;
-		this.dbHost = dbHost;
-		this.dbPort = dbPort;
-		this.sshUser = sshUser;
-		this.monitorDir = monitorDir;
+		this.servers = servers;
+		this.monitoring = false;
 		this.connectedChannelGroup = new DefaultChannelGroup("all-connected", GlobalEventExecutor.INSTANCE);
 	}
 
@@ -103,17 +87,16 @@ public class MiddlewareServer
 		Log.info(String.format("Listening port = %d", port));
 		Log.info(String.format("DB log path = %s", dbLogPath));
 		Log.info(String.format("System log path = %s", sysLogPath));
-		Log.info(String.format("DB Host = %s", dbHost));
-		Log.info(String.format("DB Port = %s", dbPort));
-		Log.info(String.format("DB User = %s", dbUser));
-		Log.info(String.format("DB PW = %s", dbPassword));
-		Log.info(String.format("SSH User = %s", sshUser));
-		Log.info(String.format("Remote Monitor Dir = %s", monitorDir));
 
-		// test MySQL/MariaDB connection using JDBC before we start anything.
-		if (!testMySQLConnection())
+		// print server info.
+		for (Server s : servers.values())
 		{
-			throw new Exception("Unable to connect to the MySQL server with the given credential.");
+			s.printLogInfo();
+			// test MySQL/MariaDB connection using JDBC before we start anything.
+			if (!s.testConnection())
+			{
+				throw new Exception("Unable to connect to the MySQL server with the given credential.");
+			}
 		}
 
 		// let's start accepting connections.
@@ -165,17 +148,16 @@ public class MiddlewareServer
 	{
 		// initialize queues
 		dbLogQueue = new ArrayBlockingQueue<String>(MiddlewareConstants.QUEUE_SIZE);
-		sysLogQueue = new ArrayBlockingQueue<String>(MiddlewareConstants.QUEUE_SIZE);
 
 		try
 		{
-			// start dstat remotely.
-			runDstatRemote();
+			// start monitoring process for each server.
+			for (Server s : servers.values())
+			{
+				s.startMonitoring();
+			}
 
-			// sleep for 1.5 sec
-			Thread.sleep(1500);
-
-			// start tailer to collect log data.
+			// start tailer to collect transaction log data.
 			runTailer();
 		}
 		catch (Exception e)
@@ -183,6 +165,8 @@ public class MiddlewareServer
 			Log.error("Exception while starting monitoring: " + e.getMessage());
 			return false;
 		}
+
+		monitoring = true;
 		return true;
 	}
 
@@ -190,19 +174,17 @@ public class MiddlewareServer
 	{
 		try
 		{
-			// stop dstat.
-			if (dstatProcess != null && dstatProcess.isAlive())
+			// stop monitoring process for each server.
+			for (Server s : servers.values())
 			{
-				dstatProcess.destroy();
+				s.stopMonitoring();
 			}
 
-			// stop tailers.
+			// stop transaction log tailers.
 			if (tailerExecutor != null)
 			{
 				tailerExecutor.shutdown();
 			}
-
-			Thread.sleep(500);
 		}
 		catch (Exception e)
 		{
@@ -210,88 +192,13 @@ public class MiddlewareServer
 			return false;
 		}
 
+		monitoring = false;
 		return true;
 	}
 
 	public boolean isMonitoring()
 	{
-		if ((dstatProcess != null && dstatProcess.isAlive()) ||
-				(tailerExecutor != null && tailerExecutor.isTerminated()))
-		{
-			return true;
-		}
-		return false;
-	}
-
-	/*
-	 * Store the remote address. Middleware only allows a single connection.
-	 */
-	public void setRemote(InetSocketAddress remoteAddress)
-	{
-		if (hasConnected)
-		{
-			return;
-		}
-		remoteHostString = remoteAddress.getHostString();
-		hasConnected = true;
-	}
-
-	// old method to run dstat locally.
-	private void runDstat() throws Exception
-	{
-		if (dstatProcess != null)
-		{
-			dstatProcess.destroy();
-		}
-
-		String[] cmd = {"/bin/bash", "./rs-sysmon2/monitor.sh"};
-		ProcessBuilder pb = new ProcessBuilder(cmd);
-		File log = new File("dstat_log");
-
-		// temp
-		pb.redirectErrorStream(true);
-		pb.redirectOutput(ProcessBuilder.Redirect.appendTo(log));
-
-		Map<String, String> env = pb.environment();
-		env.put("DSTAT_MYSQL_USER", dbUser);
-		env.put("DSTAT_MYSQL_PWD", dbPassword);
-		env.put("DSTAT_MYSQL_HOST", dbHost);
-		env.put("DSTAT_MYSQL_PORT", dbPort);
-		env.put("DSTAT_OUTPUT_PATH", sysLogPath);
-		dstatProcess = pb.start();
-		Log.debug("dstat started.");
-	}
-
-	// run dstat remotely
-	private void runDstatRemote() throws Exception
-	{
-		if (dstatProcess != null)
-		{
-			dstatProcess.destroy();
-		}
-
-		String sshEndCmd = String.format("cd %s && ./monitor.sh 1> /dev/null", monitorDir);
-
-		String sshCmd = "ssh";
-		String sshConnection = String.format("%s@%s", sshUser, dbHost);
-		String cmd = "";
-		cmd += String.format("export DSTAT_MYSQL_USER=%s;", dbUser);
-		cmd += String.format("export DSTAT_MYSQL_PWD=%s;", dbPassword);
-		cmd += String.format("export DSTAT_MYSQL_HOST=%s;", dbHost);
-		cmd += String.format("export DSTAT_MYSQL_PORT=%s;", dbPort);
-		cmd += String.format("export DSTAT_OUTPUT_PATH=%s;", "/dev/fd/2");
-		cmd += sshEndCmd;
-
-		String[] cmds = {sshCmd, sshConnection, cmd};
-
-		ProcessBuilder pb = new ProcessBuilder(cmds);
-		File sysLog = new File(sysLogPath);
-
-		pb.redirectErrorStream(true);
-		pb.redirectOutput(ProcessBuilder.Redirect.to(sysLog));
-
-		dstatProcess = pb.start();
-		Log.debug("dstat started remotely.");
+		return monitoring;
 	}
 
 	private void runTailer() throws Exception
@@ -302,53 +209,15 @@ public class MiddlewareServer
 		}
 
 		dbLogFile = new File(dbLogPath);
-		sysLogFile = new File(sysLogPath);
 
 		// discard first line for db log because of a possible truncates.
 		LogTailerListener dbLogListener = new LogTailerListener(dbLogQueue, true);
-		LogTailerListener sysLogListener = new LogTailerListener(sysLogQueue, false);
 
 		// starts from the last line for db log.
 		dbLogTailer = new LogTailer(dbLogFile, dbLogListener, 250, -1);
-		// starts from the beginning for dstat.
-		sysLogTailer = new LogTailer(sysLogFile, sysLogListener, 250, 0);
 
-		tailerExecutor = Executors.newFixedThreadPool(3); // 1 more just in case
+		tailerExecutor = Executors.newFixedThreadPool(1);
 		tailerExecutor.submit(dbLogTailer);
-		tailerExecutor.submit(sysLogTailer);
-	}
-
-	private boolean testMySQLConnection()
-	{
-		String url = String.format("jdbc:mysql://%s:%s", dbHost, dbPort);
-		boolean canConnect = false;
-		try
-		{
-			Class.forName("com.mysql.jdbc.Driver").newInstance();
-			Connection conn = (Connection) DriverManager.getConnection(url, dbUser, dbPassword);
-
-			// connection was successful.
-			conn.close();
-			canConnect = true;
-		}
-		catch (IllegalAccessException e)
-		{
-			e.printStackTrace();
-		}
-		catch (InstantiationException e)
-		{
-			e.printStackTrace();
-		}
-		catch (ClassNotFoundException e)
-		{
-			e.printStackTrace();
-		}
-		catch (SQLException e)
-		{
-			Log.debug("Caught a SQLException while testing connection to the server.");
-		}
-
-		return canConnect;
 	}
 
 	public ArrayBlockingQueue<String> getDbLogQueue()
@@ -356,9 +225,22 @@ public class MiddlewareServer
 		return dbLogQueue;
 	}
 
-	public ArrayBlockingQueue<String> getSysLogQueue()
+	public Server getServer(String name)
 	{
-		return sysLogQueue;
+		return servers.get(name);
+	}
+
+	public String getServerList()
+	{
+		String serverStr = "";
+		Collection<Server> serverList = servers.values();
+		for (Server s : serverList)
+		{
+			serverStr += s.getName();
+			serverStr += ",";
+		}
+
+		return serverStr;
 	}
 
 	public static void main(String[] args)
@@ -445,42 +327,28 @@ public class MiddlewareServer
 			{
 				throw new Exception("'syslog_path' is missing in the configuration file.");
 			}
-			dbHost = section.get("db_host");
-			if (dbHost == null)
+			String serverStr = section.get("servers");
+			if (serverStr == null)
 			{
-				throw new Exception("'db_host' is missing in the configuration file.");
+				throw new Exception("'servers' is missing in the configuration file.");
 			}
-			dbPort = section.get("db_port");
-			if (dbPort == null)
+			String[] servers = serverStr.split(MiddlewareConstants.SERVER_STRING_DELIMITER);
+
+			HashMap<String, Server> serverMap = new HashMap<>();
+
+			for (String server : servers)
 			{
-				throw new Exception("'db_port' is missing in the configuration file.");
-			}
-			if (!StringUtils.isNumeric(dbPort))
-			{
-				throw new Exception("'db_port' must be a number.");
-			}
-			dbUser = section.get("db_user");
-			if (dbUser == null)
-			{
-				throw new Exception("'db_user' is missing in the configuration file.");
-			}
-			dbPassword = section.get("db_pw");
-			if (dbPassword == null)
-			{
-				throw new Exception("'db_pw' is missing in the configuration file.");
-			}
-			sshUser = section.get("ssh_user");
-			if (sshUser == null)
-			{
-				throw new Exception("'ssh_user' is missing in the configuration file.");
-			}
-			monitorDir = section.get("monitor_dir");
-			if (monitorDir == null)
-			{
-				throw new Exception("'monitor_dir' is missing in the configuration file.");
+				Ini.Section serverSection = ini.get(server);
+				if (serverSection == null)
+				{
+					throw new Exception(String.format("'%s' section is missing in the configuration file.", server));
+				}
+
+				Server s = readServerConfig(server, serverSection, sysLogPath);
+				serverMap.put(server, s);
 			}
 
-			MiddlewareServer server = new MiddlewareServer(port, dbLogPath, sysLogPath, dbUser, dbPassword, dbHost, dbPort, sshUser, monitorDir);
+			MiddlewareServer server = new MiddlewareServer(port, dbLogPath, sysLogPath, serverMap);
 			server.run();
 		}
 		catch (ParseException e)
@@ -493,5 +361,52 @@ public class MiddlewareServer
 		{
 			Log.error(e.getMessage());
 		}
+	}
+
+	private static Server readServerConfig(String name, Ini.Section section, String logPath) throws Exception
+	{
+		String dbUser, dbPassword, dbHost, dbPort, sshUser, monitorDir, monitorScript;
+
+		dbHost = section.get("db_host");
+		if (dbHost == null)
+		{
+			throw new Exception("'db_host' is missing in the configuration file.");
+		}
+		dbPort = section.get("db_port");
+		if (dbPort == null)
+		{
+			throw new Exception("'db_port' is missing in the configuration file.");
+		}
+		if (!StringUtils.isNumeric(dbPort))
+		{
+			throw new Exception("'db_port' must be a number.");
+		}
+		dbUser = section.get("db_user");
+		if (dbUser == null)
+		{
+			throw new Exception("'db_user' is missing in the configuration file.");
+		}
+		dbPassword = section.get("db_pw");
+		if (dbPassword == null)
+		{
+			throw new Exception("'db_pw' is missing in the configuration file.");
+		}
+		sshUser = section.get("ssh_user");
+		if (sshUser == null)
+		{
+			throw new Exception("'ssh_user' is missing in the configuration file.");
+		}
+		monitorDir = section.get("monitor_dir");
+		if (monitorDir == null)
+		{
+			throw new Exception("'monitor_dir' is missing in the configuration file.");
+		}
+		monitorScript = section.get("monitor_script");
+		if (monitorScript == null)
+		{
+			throw new Exception("'monitor_script' is missing in the configuration file.");
+		}
+
+		return new Server(name, dbHost, dbPort, dbUser, dbPassword, sshUser, monitorDir, monitorScript, logPath);
 	}
 }

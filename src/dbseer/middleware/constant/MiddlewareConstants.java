@@ -24,6 +24,8 @@ public class MiddlewareConstants
 	public static final int QUEUE_SIZE = 1800; // equi. 30 min logs
 	public static final String PROTOCOL_VERSION = "v0.1";
 
+	public static final String SERVER_STRING_DELIMITER = ",";
+
 	public static final int PACKET_PING = 0;
 	public static final int PACKET_CHECK_VERSION = 10;
 	public static final int PACKET_CHECK_VERSION_SUCCESS = 11;
@@ -41,4 +43,7 @@ public class MiddlewareConstants
 	public static final int PACKET_REQUEST_SYS_LOG = 300;
 	public static final int PACKET_SYS_LOG = 301;
 	public static final int PACKET_CONNECTION_DENIED = 400;
+
+	public static final int PACKET_REQUEST_SERVER_LIST = 500;
+	public static final int PACKET_SERVER_LIST = 501;
 }

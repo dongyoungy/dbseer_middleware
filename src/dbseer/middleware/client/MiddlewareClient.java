@@ -18,6 +18,7 @@ package dbseer.middleware.client;
 
 import com.esotericsoftware.minlog.Log;
 import dbseer.middleware.constant.MiddlewareConstants;
+import dbseer.middleware.event.MiddlewareClientEvent;
 import dbseer.middleware.packet.MiddlewarePacketDecoder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
@@ -32,6 +33,9 @@ import org.apache.commons.cli.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Observable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -40,31 +44,34 @@ import java.util.concurrent.Executors;
  *
  * The client for the middleware.
  */
-public class MiddlewareClient implements Runnable
+public class MiddlewareClient extends Observable implements Runnable
 {
 	private static final int MAX_RETRY = 3;
 
 	private String host;
 	private int port;
 	private int retry;
+	private boolean isMonitoring;
 
-	private String sysLogPath;
-	private String dbLogPath;
+	private String logPath;
 
 	private Channel channel = null;
 	private ExecutorService requesterExecutor = null;
-	private MiddlewareClientLogRequester logRequester = null;
 
 	private ExecutorService heartbeatSenderExecutor = null;
 	private MiddlewareClientHeartbeatSender heartbeatSender = null;
 
-	public MiddlewareClient(String host, int port, String sysLogPath, String dbLogPath)
+	private MiddlewareClientLogRequester dbLogRequester = null;
+	private Map<String, MiddlewareClientLogRequester> sysLogRequester = null;
+
+	public MiddlewareClient(String host, int port, String logPath)
 	{
 		this.retry = 0;
 		this.host = host;
 		this.port = port;
-		this.sysLogPath = sysLogPath;
-		this.dbLogPath = dbLogPath;
+		this.logPath = logPath;
+		this.isMonitoring = false;
+		this.sysLogRequester = new HashMap<>();
 	}
 
 	public void setLogLevel(int level)
@@ -77,8 +84,7 @@ public class MiddlewareClient implements Runnable
 		// debug info
 		Log.debug(String.format("host = %s", host));
 		Log.debug(String.format("port = %d", port));
-		Log.debug(String.format("db log = %s", dbLogPath));
-		Log.debug(String.format("sys log = %s", sysLogPath));
+		Log.debug(String.format("log path = %s", logPath));
 
 		// client needs to handle incoming messages from the middleware as well.
 		EventLoopGroup group = new NioEventLoopGroup(4);
@@ -86,10 +92,10 @@ public class MiddlewareClient implements Runnable
 		try
 		{
 			// set up log files
-			File dbLogFile = new File(dbLogPath);
-			File sysLogFile = new File(sysLogPath);
-			final PrintWriter dbLogWriter = new PrintWriter(new FileWriter(dbLogFile, false));
-			final PrintWriter sysLogWriter = new PrintWriter(new FileWriter(sysLogFile, false));
+//			File dbLogFile = new File(dbLogPath);
+//			File sysLogFile = new File(sysLogPath);
+//			final PrintWriter dbLogWriter = new PrintWriter(new FileWriter(dbLogFile, false));
+//			final PrintWriter sysLogWriter = new PrintWriter(new FileWriter(sysLogFile, false));
 
 			final MiddlewareClient client = this;
 
@@ -103,7 +109,7 @@ public class MiddlewareClient implements Runnable
 						{
 							ChannelPipeline p = ch.pipeline();
 							p.addLast(new IdleStateHandler(10, 0, 0));
-							p.addLast(new MiddlewarePacketDecoder(),new MiddlewareClientHandler(client, sysLogWriter, dbLogWriter));
+							p.addLast(new MiddlewarePacketDecoder(),new MiddlewareClientHandler(client));
 						}
 					});
 
@@ -121,6 +127,15 @@ public class MiddlewareClient implements Runnable
 		}
 		catch (Exception e)
 		{
+			if (e instanceof InterruptedException)
+			{
+
+			}
+			else
+			{
+				setChanged();
+				notifyObservers(new MiddlewareClientEvent(MiddlewareClientEvent.ERROR, e.getMessage()));
+			}
 			Log.error(e.getMessage());
 		}
 		finally
@@ -135,9 +150,14 @@ public class MiddlewareClient implements Runnable
 		return channel;
 	}
 
-	public MiddlewareClientLogRequester getLogRequester()
+	public MiddlewareClientLogRequester getDbLogRequester()
 	{
-		return logRequester;
+		return dbLogRequester;
+	}
+
+	public MiddlewareClientLogRequester getSysLogRequester(String server)
+	{
+		return sysLogRequester.get(server);
 	}
 
 	public void startMonitoring() throws Exception
@@ -146,10 +166,13 @@ public class MiddlewareClient implements Runnable
 		{
 			throw new Exception(String.format("Middleware failed to start with %d retries", MAX_RETRY));
 		}
-		ByteBuf b = Unpooled.buffer();
-		b.writeInt(MiddlewareConstants.PACKET_START_MONITORING);
-		b.writeInt(0);
-		channel.writeAndFlush(b);
+		if (channel != null)
+		{
+			ByteBuf b = Unpooled.buffer();
+			b.writeInt(MiddlewareConstants.PACKET_START_MONITORING);
+			b.writeInt(0);
+			channel.writeAndFlush(b);
+		}
 		Log.debug("Start monitoring packet sent.");
 		retry++;
 	}
@@ -157,22 +180,76 @@ public class MiddlewareClient implements Runnable
 	public void stopMonitoring() throws Exception
 	{
 		this.stopExecutors();
-		ByteBuf b = Unpooled.buffer();
-		b.writeInt(MiddlewareConstants.PACKET_STOP_MONITORING);
-		b.writeInt(0);
-		channel.writeAndFlush(b);
+		if (channel != null)
+		{
+			ByteBuf b = Unpooled.buffer();
+			b.writeInt(MiddlewareConstants.PACKET_STOP_MONITORING);
+			b.writeInt(0);
+			channel.writeAndFlush(b);
+		}
 		Log.debug("Stop monitoring packet sent.");
 
 		// reset retry count.
 		retry = 0;
+		isMonitoring = false;
 	}
 
-	public void startRequester() throws Exception
+	public void requestServerList() throws Exception
 	{
-		logRequester = new MiddlewareClientLogRequester(channel);
-		requesterExecutor = Executors.newSingleThreadExecutor();
-		requesterExecutor.submit(logRequester);
-		Log.debug("Log requester launched.");
+		if (channel != null)
+		{
+			ByteBuf b= Unpooled.buffer();
+			b.writeInt(MiddlewareConstants.PACKET_REQUEST_SERVER_LIST);
+			b.writeInt(0);
+			channel.writeAndFlush(b);
+		}
+		Log.debug("Server list request packet sent.");
+	}
+
+	public PrintWriter startDbLogRequester() throws Exception
+	{
+		if (requesterExecutor == null)
+		{
+			requesterExecutor = Executors.newCachedThreadPool();
+		}
+		dbLogRequester =
+				new MiddlewareClientLogRequester(channel, MiddlewareConstants.PACKET_REQUEST_DB_LOG);
+
+		requesterExecutor.submit(dbLogRequester);
+
+		File dbLogFile = new File(logPath + File.separator + "db.log");
+		PrintWriter writer = new PrintWriter(new FileWriter(dbLogFile, false));
+
+		Log.debug("DB Log requester launched.");
+
+		return writer;
+	}
+
+	public Map<String, PrintWriter> startSysLogRequester(String serverStr) throws Exception
+	{
+		if (requesterExecutor == null)
+		{
+			requesterExecutor = Executors.newCachedThreadPool();
+		}
+
+		Map<String, PrintWriter> writers = new HashMap<>();
+		String[] servers = serverStr.split(MiddlewareConstants.SERVER_STRING_DELIMITER);
+		for (String server : servers)
+		{
+			MiddlewareClientLogRequester logRequester =
+					new MiddlewareClientLogRequester(channel, MiddlewareConstants.PACKET_REQUEST_SYS_LOG, server);
+
+			requesterExecutor.submit(logRequester);
+			sysLogRequester.put(server, logRequester);
+
+			File sysLogFile = new File(logPath + File.separator + "sys.log." + server);
+			PrintWriter writer = new PrintWriter(new FileWriter(sysLogFile, false));
+			writers.put(server, writer);
+		}
+
+		Log.debug("Sys Log requesters launched.");
+
+		return writers;
 	}
 
 	public void startHeartbeatSender() throws Exception
@@ -193,6 +270,29 @@ public class MiddlewareClient implements Runnable
 		{
 			heartbeatSenderExecutor.shutdownNow();
 		}
+		dbLogRequester = null;
+		sysLogRequester = new HashMap<>();
 	}
 
+	public void setMonitoring(boolean monitoring)
+	{
+		isMonitoring = monitoring;
+		setChanged();
+		if (isMonitoring)
+		{
+			notifyObservers(new MiddlewareClientEvent(MiddlewareClientEvent.IS_MONITORING));
+		}
+		else
+		{
+			notifyObservers(new MiddlewareClientEvent(MiddlewareClientEvent.IS_NOT_MONITORING));
+		}
+	}
+
+	public void disconnect() throws Exception
+	{
+		if (channel != null && channel.isActive())
+		{
+			channel.close().sync();
+		}
+	}
 }

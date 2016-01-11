@@ -60,7 +60,6 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 		InetSocketAddress address = (InetSocketAddress) ctx.channel().remoteAddress();
 		if (address != null)
 		{
-			server.setRemote(address);
 			Log.debug("channel active with: " + address.getHostString());
 		}
 		else
@@ -160,6 +159,16 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			ctx.writeAndFlush(ans);
 			Log.debug("check version sent");
 		}
+		else if (header == MiddlewareConstants.PACKET_REQUEST_SERVER_LIST)
+		{
+			String serverList = server.getServerList();
+			ByteBuf ans = Unpooled.buffer();
+			ans.writeInt(MiddlewareConstants.PACKET_SERVER_LIST);
+			ans.writeInt(serverList.getBytes("UTF-8").length);
+			ans.writeBytes(serverList.getBytes("UTF-8"));
+			ctx.writeAndFlush(ans);
+			Log.debug("server list sent");
+		}
 		else if (header == MiddlewareConstants.PACKET_REQUEST_DB_LOG)
 		{
 			String log = "";
@@ -178,9 +187,10 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 		}
 		else if (header == MiddlewareConstants.PACKET_REQUEST_SYS_LOG)
 		{
-			String log = "";
-			ArrayList<String> logs = new ArrayList<String>();
-			server.getSysLogQueue().drainTo(logs);
+			String serverStr = packet.body;
+			String log = serverStr + MiddlewareConstants.SERVER_STRING_DELIMITER;
+			ArrayList<String> logs = new ArrayList<>();
+			server.getServer(serverStr).getLogQueue().drainTo(logs);
 			for (String aLog : logs)
 			{
 				log += aLog;

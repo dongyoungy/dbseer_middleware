@@ -23,6 +23,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
 import java.io.PrintWriter;
+import java.util.Map;
 
 /**
  * Created by Dong Young Yoon on 12/2/15.
@@ -30,14 +31,12 @@ import java.io.PrintWriter;
 public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 {
 	private MiddlewareClient client;
-	private PrintWriter sysLogWriter;
-	private PrintWriter dbLogWriter;
+	private Map<String,PrintWriter> sysWriter;
+	private PrintWriter dbWriter;
 
-	public MiddlewareClientHandler(MiddlewareClient client, PrintWriter sysLogWriter, PrintWriter dbLogWriter)
+	public MiddlewareClientHandler(MiddlewareClient client)
 	{
 		this.client = client;
-		this.sysLogWriter = sysLogWriter;
-		this.dbLogWriter = dbLogWriter;
 	}
 
 	@Override
@@ -51,10 +50,9 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 		if (header == MiddlewareConstants.PACKET_START_MONITORING_SUCCESS)
 		{
 			Log.debug("start monitoring succeeded.");
-			// spawn log requester
-			client.startRequester();
-			// start heartbeat sender
-			client.startHeartbeatSender();
+
+			// request server list.
+			client.requestServerList();
 		}
 		else if (header == MiddlewareConstants.PACKET_START_MONITORING_FAILURE)
 		{
@@ -65,40 +63,69 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 		else if (header == MiddlewareConstants.PACKET_STOP_MONITORING_SUCCESS)
 		{
 			Log.debug("stop monitoring succeeded.");
+			// set monitoring to false
+			client.setMonitoring(false);
 		}
 		else if (header == MiddlewareConstants.PACKET_STOP_MONITORING_FAILURE)
 		{
 			Log.debug("stop monitoring failed.");
+			// set monitoring to false
+			client.setMonitoring(false);
+		}
+		else if (header == MiddlewareConstants.PACKET_SERVER_LIST)
+		{
+			String serverStr = packet.body;
+
+			// spawn log requester
+			dbWriter = client.startDbLogRequester();
+			sysWriter = client.startSysLogRequester(serverStr);
+
+			// start heartbeat sender
+			client.startHeartbeatSender();
+			// set monitoring to true
+			client.setMonitoring(true);
 		}
 		else if (header == MiddlewareConstants.PACKET_DB_LOG)
 		{
 			Log.debug("received db log.");
 			// write db log.
-			dbLogWriter.write(packet.body);
-			dbLogWriter.flush();
-			client.getLogRequester().dbLogReceived();
+			dbWriter.write(packet.body);
+			dbWriter.flush();
+			client.getDbLogRequester().logReceived();
 		}
 		else if (header == MiddlewareConstants.PACKET_SYS_LOG)
 		{
 			Log.debug("received sys log.");
+
+			String[] contents = packet.body.split(MiddlewareConstants.SERVER_STRING_DELIMITER, 2);
+			String server = contents[0];
+			String log = contents[1];
+
 			// write sys log.
-			sysLogWriter.write(packet.body);
-			sysLogWriter.flush();
-			client.getLogRequester().sysLogReceived();
+			PrintWriter writer = sysWriter.get(server);
+			writer.write(log);
+			writer.flush();
+			client.getSysLogRequester(server).logReceived();
 		}
 		else if (header == MiddlewareConstants.PACKET_CONNECTION_DENIED)
 		{
 			Log.debug("connection denied");
 			client.getChannel().close().sync();
+			// set monitoring to false
+			client.setMonitoring(false);
 		}
 		else if (header == MiddlewareConstants.PACKET_CHECK_VERSION_SUCCESS)
 		{
 			Log.debug("check version succeeded.");
+			// start monitoring
+			client.startMonitoring();
 		}
 		else if (header == MiddlewareConstants.PACKET_CHECK_VERSION_FAILURE)
 		{
 			Log.debug("check version failed.");
 			client.getChannel().close().sync();
+			// set monitoring to false
+			client.setMonitoring(false);
 		}
 		else if (header == MiddlewareConstants.PACKET_PING)
 		{
@@ -114,6 +141,8 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception
 	{
 		Log.debug("Child handler exception caught: " + cause.toString());
+		// set monitoring to false
+		client.setMonitoring(false);
 		ctx.close();
 	}
 

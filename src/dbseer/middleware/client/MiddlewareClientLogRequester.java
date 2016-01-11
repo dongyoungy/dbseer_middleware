@@ -29,27 +29,31 @@ public class MiddlewareClientLogRequester implements Runnable
 {
 	private static final int SECONDS_TO_TIMEOUT = 10;
 	private static final int TIMEOUT = 3; // # of allowed timeouts.
-	private volatile boolean isDbLogReceived = false;
-	private volatile boolean isSysLogReceived = false;
+	private volatile boolean isLogReceived = false;
 
 	private Channel channel;
 	private volatile int timeout;
+	private int packetHeader;
+	private String server;
 
-	public MiddlewareClientLogRequester(Channel channel)
+	public MiddlewareClientLogRequester(Channel channel, int packetHeader)
 	{
 		this.channel = channel;
+		this.packetHeader = packetHeader;
 		this.timeout = 0;
 	}
 
-	public synchronized void dbLogReceived()
+	public MiddlewareClientLogRequester(Channel channel, int packetHeader, String server)
 	{
-		isDbLogReceived = true;
-		timeout = 0;
+		this.channel = channel;
+		this.packetHeader = packetHeader;
+		this.server = server;
+		this.timeout = 0;
 	}
 
-	public synchronized void sysLogReceived()
+	public synchronized void logReceived()
 	{
-		isSysLogReceived = true;
+		isLogReceived = true;
 		timeout = 0;
 	}
 
@@ -57,19 +61,42 @@ public class MiddlewareClientLogRequester implements Runnable
 	public void run()
 	{
 		// Let's create requesting Bytebufs and reuse them.
-		ByteBuf sysLogRequest = Unpooled.buffer();
-		ByteBuf dbLogRequest = Unpooled.buffer();
+		ByteBuf logRequest = Unpooled.buffer();
 		String str = "";
 
-		// write header and length (mandatory!)
-		sysLogRequest.writeInt(MiddlewareConstants.PACKET_REQUEST_SYS_LOG);
-		dbLogRequest.writeInt(MiddlewareConstants.PACKET_REQUEST_DB_LOG);
-		sysLogRequest.writeInt(0);
-		dbLogRequest.writeInt(0);
+		try
+		{
+			// initial 0.5 sec delay.
+			Thread.sleep(500);
+
+			// write header and length (mandatory!)
+			logRequest.writeInt(packetHeader);
+			if (server == null)
+			{
+				logRequest.writeInt(0);
+			}
+			else
+			{
+				logRequest.writeInt(server.getBytes("UTF-8").length);
+				logRequest.writeBytes(server.getBytes("UTF-8"));
+			}
+		}
+		catch (Exception e)
+		{
+			Log.error(this.getClass().getCanonicalName(), "Exception caught while sleeping: " + e.getMessage());
+			try
+			{
+				channel.close().sync();
+			}
+			catch (InterruptedException e1)
+			{
+				Log.error(this.getClass().getCanonicalName(), "Exception caught while closing connection: " + e1.getMessage());
+			}
+			return;
+		}
 
 		Log.debug("Requester sending first log requests.");
-		channel.write(sysLogRequest.retain());
-		channel.write(dbLogRequest.retain());
+		channel.write(logRequest.retain());
 		channel.flush();
 
 		while (true)
@@ -77,7 +104,7 @@ public class MiddlewareClientLogRequester implements Runnable
 			try
 			{
 				int waitTime = 0;
-				while (waitTime < 1000 * SECONDS_TO_TIMEOUT && !isDbLogReceived && !isSysLogReceived)
+				while (waitTime < 1000 * SECONDS_TO_TIMEOUT && !isLogReceived)
 				{
 					Thread.sleep(200);
 					if (Thread.currentThread().isInterrupted())
@@ -91,8 +118,7 @@ public class MiddlewareClientLogRequester implements Runnable
 				// if request has timed out, request again.
 				if (waitTime >= 1000 * SECONDS_TO_TIMEOUT)
 				{
-					isDbLogReceived = true;
-					isSysLogReceived = true;
+					isLogReceived = true;
 					++timeout;
 				}
 
@@ -101,19 +127,19 @@ public class MiddlewareClientLogRequester implements Runnable
 					throw new Exception(String.format("Log request has timed out for maximum of %d times.", TIMEOUT));
 				}
 
-				if (isDbLogReceived)
+				if (isLogReceived)
 				{
-					Log.debug(String.format("Requester sending SQL performance log requests. (try #%d)", timeout));
-					channel.write(dbLogRequest.retain());
+					if (packetHeader == MiddlewareConstants.PACKET_REQUEST_DB_LOG)
+					{
+						Log.debug(String.format("Requester sending SQL performance log requests. (try #%d)", timeout));
+					}
+					else if (packetHeader == MiddlewareConstants.PACKET_REQUEST_SYS_LOG)
+					{
+						Log.debug(String.format("Requester sending OS/DBMS stat requests. (try #%d)", timeout));
+					}
+					channel.write(logRequest.retain());
 					channel.flush();
-					isDbLogReceived = false;
-				}
-				if (isSysLogReceived)
-				{
-					Log.debug(String.format("Requester sending OS/DBMS stat requests. (try #%d)", timeout));
-					channel.write(sysLogRequest.retain());
-					channel.flush();
-					isSysLogReceived = false;
+					isLogReceived = false;
 				}
 			}
 			catch (InterruptedException e)
