@@ -178,7 +178,9 @@ public class MiddlewareServer
 			for (Server s : servers.values())
 			{
 				s.stopMonitoring();
+				s.getLogQueue().clear();
 			}
+			dbLogQueue.clear();
 
 			// stop transaction log tailers.
 			if (tailerExecutor != null)
