@@ -191,6 +191,7 @@ public class MiddlewareServer
 		catch (Exception e)
 		{
 			Log.error("Exception while stopping monitoring: " + e.getMessage());
+			e.printStackTrace();
 			return false;
 		}
 
