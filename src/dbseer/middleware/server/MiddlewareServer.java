@@ -180,7 +180,10 @@ public class MiddlewareServer
 				s.stopMonitoring();
 				s.getLogQueue().clear();
 			}
-			dbLogQueue.clear();
+			if (dbLogQueue != null)
+			{
+				dbLogQueue.clear();
+			}
 
 			// stop transaction log tailers.
 			if (tailerExecutor != null)
