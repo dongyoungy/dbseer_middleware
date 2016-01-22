@@ -16,6 +16,8 @@
 
 package dbseer.middleware.event;
 
+import java.util.List;
+
 /**
  * Created by Dong Young Yoon on 1/3/16.
  */
@@ -27,6 +29,7 @@ public class MiddlewareClientEvent
 
 	public int event;
 	public String error;
+	public String serverStr;
 
 	public MiddlewareClientEvent(int event)
 	{

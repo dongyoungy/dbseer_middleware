@@ -83,7 +83,7 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 			// start heartbeat sender
 			client.startHeartbeatSender();
 			// set monitoring to true
-			client.setMonitoring(true);
+			client.setMonitoring(true, serverStr);
 		}
 		else if (header == MiddlewareConstants.PACKET_TX_LOG)
 		{

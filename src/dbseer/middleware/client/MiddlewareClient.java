@@ -32,9 +32,7 @@ import io.netty.handler.timeout.IdleStateHandler;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Observable;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -63,6 +61,8 @@ public class MiddlewareClient extends Observable implements Runnable
 	private MiddlewareClientLogRequester txLogRequester = null;
 	private Map<String, MiddlewareClientLogRequester> sysLogRequester = null;
 
+	private ArrayList<String> serverNameList = null;
+
 	public MiddlewareClient(String host, int port, String logPath)
 	{
 		this.retry = 0;
@@ -71,6 +71,7 @@ public class MiddlewareClient extends Observable implements Runnable
 		this.logPath = logPath;
 		this.isMonitoring = false;
 		this.sysLogRequester = new HashMap<>();
+		this.serverNameList = new ArrayList<>();
 	}
 
 	public void setLogLevel(int level)
@@ -165,6 +166,10 @@ public class MiddlewareClient extends Observable implements Runnable
 		{
 			throw new Exception(String.format("Middleware failed to start with %d retries", MAX_RETRY));
 		}
+
+		// clear server names.
+		this.serverNameList.clear();
+
 		if (channel != null)
 		{
 			ByteBuf b = Unpooled.buffer();
@@ -244,6 +249,7 @@ public class MiddlewareClient extends Observable implements Runnable
 			File sysLogFile = new File(logPath + File.separator + MiddlewareConstants.SYS_LOG_PREFIX + "." + server);
 			PrintWriter writer = new PrintWriter(new FileWriter(sysLogFile, false));
 			writers.put(server, writer);
+			serverNameList.add(server);
 		}
 
 		Log.debug("Sys Log requesters launched.");
@@ -271,20 +277,47 @@ public class MiddlewareClient extends Observable implements Runnable
 		}
 		txLogRequester = null;
 		sysLogRequester = new HashMap<>();
+
+		// clear server names.
+		this.serverNameList.clear();
 	}
 
 	public void setMonitoring(boolean monitoring)
 	{
 		isMonitoring = monitoring;
 		setChanged();
+		MiddlewareClientEvent event;
 		if (isMonitoring)
 		{
-			notifyObservers(new MiddlewareClientEvent(MiddlewareClientEvent.IS_MONITORING));
+			event = new MiddlewareClientEvent(MiddlewareClientEvent.IS_MONITORING);
 		}
 		else
 		{
-			notifyObservers(new MiddlewareClientEvent(MiddlewareClientEvent.IS_NOT_MONITORING));
+			event = new MiddlewareClientEvent(MiddlewareClientEvent.IS_NOT_MONITORING);
 		}
+		notifyObservers(event);
+	}
+
+	public void setMonitoring(boolean monitoring, String serverStr)
+	{
+		isMonitoring = monitoring;
+		setChanged();
+		MiddlewareClientEvent event;
+		if (isMonitoring)
+		{
+			event = new MiddlewareClientEvent(MiddlewareClientEvent.IS_MONITORING);
+			event.serverStr = serverStr;
+		}
+		else
+		{
+			event = new MiddlewareClientEvent(MiddlewareClientEvent.IS_NOT_MONITORING);
+		}
+		notifyObservers(event);
+	}
+
+	public boolean isMonitoring()
+	{
+		return isMonitoring;
 	}
 
 	public void disconnect() throws Exception
@@ -293,5 +326,10 @@ public class MiddlewareClient extends Observable implements Runnable
 		{
 			channel.close().sync();
 		}
+	}
+
+	public ArrayList<String> getServerNameList()
+	{
+		return serverNameList;
 	}
 }
