@@ -37,9 +37,7 @@ import org.ini4j.Ini;
 
 import java.io.File;
 import java.io.FileReader;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -328,10 +326,29 @@ public class MiddlewareServer
 			{
 				throw new Exception("'dblog_path' is missing in the configuration file.");
 			}
+			File dbLogFile = new File(dbLogPath);
+
+			// error if dblog_path is a directory.
+			if (dbLogFile.exists() && dbLogFile.isDirectory())
+			{
+				throw new Exception(String.format("dblog_path: '%s' is a directory, not a file.", dbLogPath));
+			}
 			sysLogPath = section.get("syslog_dir");
 			if (sysLogPath == null)
 			{
 				throw new Exception("'syslog_dir' is missing in the configuration file.");
+			}
+
+			File sysLogDir = new File(sysLogPath);
+			// check syslog_dir exists.
+			if (sysLogDir.exists() && sysLogDir.isFile())
+			{
+				throw new Exception(String.format("syslog_dir: '%s' is a file, not a directory.", sysLogDir));
+			}
+			// if it doesn't exist, create the directory.
+			else if (!sysLogDir.exists())
+			{
+				sysLogDir.mkdirs();
 			}
 			String serverStr = section.get("servers");
 			if (serverStr == null)
@@ -339,6 +356,14 @@ public class MiddlewareServer
 				throw new Exception("'servers' is missing in the configuration file.");
 			}
 			String[] servers = serverStr.split(MiddlewareConstants.SERVER_STRING_DELIMITER);
+			Set<String> checkDuplicateServerSet = new HashSet<>();
+			for (String s : servers)
+			{
+				if (!checkDuplicateServerSet.add(s))
+				{
+					throw new Exception("There are duplicate server names.");
+				}
+			}
 
 			HashMap<String, Server> serverMap = new HashMap<>();
 
