@@ -306,12 +306,12 @@ public class MiddlewareClient extends Observable implements Runnable
 		if (isMonitoring)
 		{
 			event = new MiddlewareClientEvent(MiddlewareClientEvent.IS_MONITORING);
-			event.serverStr = serverStr;
 		}
 		else
 		{
 			event = new MiddlewareClientEvent(MiddlewareClientEvent.IS_NOT_MONITORING);
 		}
+		event.serverStr = serverStr;
 		notifyObservers(event);
 	}
 

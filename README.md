@@ -83,7 +83,7 @@ monitor_script=monitor.sh
 
 ### listen_port
 
-`listen_port` specifies the port that the middleware listens to for the communication with DBSeer.
+`listen_port` specifies the port that the middleware listens for the communication with DBSeer.
 
 ### dblog_path
 

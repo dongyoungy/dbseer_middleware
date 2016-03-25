@@ -112,7 +112,8 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 			Log.debug("connection denied");
 			client.getChannel().close().sync();
 			// set monitoring to false
-			client.setMonitoring(false);
+			client.setMonitoring(false, "Connection denied. It is possible that another DBSeer instance is " +
+					"connected with the middleware now.");
 		}
 		else if (header == MiddlewareConstants.PACKET_CHECK_VERSION_SUCCESS)
 		{
