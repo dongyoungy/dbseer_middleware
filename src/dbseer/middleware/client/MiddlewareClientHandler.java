@@ -143,7 +143,7 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 	{
 		Log.debug("Child handler exception caught: " + cause.toString());
 		// set monitoring to false
-		client.setMonitoring(false);
+		client.setMonitoring(false, cause.toString());
 		ctx.close();
 	}
 
