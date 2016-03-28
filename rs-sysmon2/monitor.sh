@@ -4,9 +4,9 @@ echo "------------------- MONITORING TOOl --------------"
 
 echo $$ > ./monitor.pid
 
-rm $DSTAT_OUTPUT_PATH
+rm $DSTAT_OUTPUT_PATH 2> /dev/null
 
-exec ./rs-sysmon2/dstat --noupdate -T -l -f -c -m -n -d -r --aio -s -g --vm --fs  -i -y -p --disk-util --top-mysql-cpu --mysql5-all1 --mysql-ndb --client-events --output $DSTAT_OUTPUT_PATH
+exec ./dstat --noupdate -T -l -f -c -m -n -d -r --aio -s -g --vm --fs  -i -y -p --disk-util --top-mysql-cpu --mysql5-all1 --mysql-ndb --client-events --output $DSTAT_OUTPUT_PATH
 
 #if [ ""$DSTAT_CONFIGURED != "true" ]
 #then
