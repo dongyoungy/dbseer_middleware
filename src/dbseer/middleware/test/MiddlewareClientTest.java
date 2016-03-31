@@ -110,7 +110,7 @@ public class MiddlewareClientTest
 			host = line.getOptionValue("h");
 			logPath = line.getOptionValue("d");
 
-			MiddlewareClient client = new MiddlewareClient(id, password, host, port, logPath);
+			MiddlewareClient client = new MiddlewareClient(host, id, password, port, logPath);
 			client.setLogLevel(Log.LEVEL_DEBUG);
 
 			Future clientFuture = clientExecutor.submit(client);
