@@ -197,6 +197,8 @@ public class MiddlewareServer
 	{
 		try
 		{
+			Log.info("Stop monitoring");
+
 			// stop logging at MaxScale dbseerroute.
 			namedPipeFile.writeBytes("0");
 
