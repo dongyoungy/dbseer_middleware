@@ -105,7 +105,7 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			if (!receivedId.equals(server.getId()) || !receivedPassword.equals(server.getPassword()))
 			{
 				Log.debug("start monitoring failure: authentication failed.");
-				ans.writeInt(MiddlewareConstants.PACKET_START_MONITORING_FAILURE);
+				ans.writeInt(MiddlewareConstants.PACKET_AUTHENTICATION_FAILURE);
 				String reason = "Authentication failed.";
 				ans.writeInt(reason.getBytes("UTF-8").length);
 				ans.writeBytes(reason.getBytes("UTF-8"));

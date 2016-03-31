@@ -39,6 +39,7 @@ public class MiddlewareConstants
 	public static final int PACKET_STOP_MONITORING = 103;
 	public static final int PACKET_STOP_MONITORING_SUCCESS = 104;
 	public static final int PACKET_STOP_MONITORING_FAILURE = 105;
+	public static final int PACKET_AUTHENTICATION_FAILURE = 106;
 
 	public static final int PACKET_REQUEST_TX_LOG = 200;
 	public static final int PACKET_TX_LOG = 201;

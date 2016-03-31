@@ -54,6 +54,12 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 			// request server list.
 			client.requestServerList();
 		}
+		else if (header == MiddlewareConstants.PACKET_AUTHENTICATION_FAILURE)
+		{
+			Log.debug("authenticaion failed.");
+			// set monitoring to false
+			client.setMonitoring(false, packet.body);
+		}
 		else if (header == MiddlewareConstants.PACKET_START_MONITORING_FAILURE)
 		{
 			Log.debug("start monitoring failed.");
@@ -70,14 +76,7 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 		{
 			Log.debug("stop monitoring failed.");
 			// set monitoring to false
-			if (packet.body.isEmpty())
-			{
-				client.setMonitoring(false);
-			}
-			else
-			{
-				client.setMonitoring(false, packet.body);
-			}
+			client.setMonitoring(false);
 		}
 		else if (header == MiddlewareConstants.PACKET_SERVER_LIST)
 		{
