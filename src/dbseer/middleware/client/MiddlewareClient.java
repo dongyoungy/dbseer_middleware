@@ -141,6 +141,7 @@ public class MiddlewareClient extends Observable implements Runnable
 				notifyObservers(new MiddlewareClientEvent(MiddlewareClientEvent.ERROR, e.getMessage()));
 			}
 			Log.error(e.getMessage());
+			e.printStackTrace();
 		}
 		finally
 		{
