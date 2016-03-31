@@ -37,6 +37,7 @@ import org.ini4j.Ini;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.RandomAccessFile;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -54,11 +55,13 @@ public class MiddlewareServer
 	private int port;
 	private String dbLogPath;
 	private String sysLogPath;
+	private String namedPipePath;
 	private boolean monitoring;
 
 	private Map<String, Server> servers;
 
 	private File dbLogFile = null;
+	private RandomAccessFile namedPipeFile = null;
 	private ExecutorService tailerExecutor = null;
 	private LogTailer dbLogTailer = null;
 
@@ -66,13 +69,14 @@ public class MiddlewareServer
 
 	private ChannelGroup connectedChannelGroup;
 
-	public MiddlewareServer(String id, String password, int port, String dbLogPath, String sysLogPath, Map<String, Server> servers)
+	public MiddlewareServer(String id, String password, int port, String dbLogPath, String sysLogPath, String namedPipePath, Map<String, Server> servers)
 	{
 		this.id = id;
 		this.password = password;
 		this.port = port;
 		this.dbLogPath = dbLogPath;
 		this.sysLogPath = sysLogPath;
+		this.namedPipePath = namedPipePath;
 		this.servers = servers;
 		this.monitoring = false;
 		this.connectedChannelGroup = new DefaultChannelGroup("all-connected", GlobalEventExecutor.INSTANCE);
@@ -100,6 +104,18 @@ public class MiddlewareServer
 				throw new Exception("Unable to connect to the MySQL server with the given credential.");
 			}
 		}
+
+		// open named pipe.
+		namedPipeFile = new RandomAccessFile(this.namedPipePath, "w");
+		if (namedPipeFile == null)
+		{
+			throw new Exception("Cannot open the named pipe for communication with dbseerroute. " +
+					"You must run Maxscale with dbseerroute with correct named pipe first.");
+		}
+
+		// attach shutdown hook.
+		MiddlewareServerShutdown shutdownThread = new MiddlewareServerShutdown(this);
+		Runtime.getRuntime().addShutdownHook(shutdownThread);
 
 		// let's start accepting connections.
 		EventLoopGroup bossGroup = new NioEventLoopGroup(1);
@@ -153,6 +169,9 @@ public class MiddlewareServer
 
 		try
 		{
+			// start logging at MaxScale dbseerroute.
+			namedPipeFile.writeBytes("1");
+
 			// start monitoring process for each server.
 			for (Server s : servers.values())
 			{
@@ -176,6 +195,9 @@ public class MiddlewareServer
 	{
 		try
 		{
+			// stop logging at MaxScale dbseerroute.
+			namedPipeFile.writeBytes("0");
+
 			// stop monitoring process for each server.
 			for (Server s : servers.values())
 			{
@@ -330,6 +352,11 @@ public class MiddlewareServer
 			{
 				throw new Exception("'password' is missing in the configuration file.");
 			}
+			String namedPipePath = section.get("named_pipe");
+			if (namedPipePath == null)
+			{
+				throw new Exception("'named_pipe' is missing in the configuration file.");
+			}
 			String portStr = section.get("listen_port");
 			if (portStr != null)
 			{
@@ -393,7 +420,7 @@ public class MiddlewareServer
 				serverMap.put(server, s);
 			}
 
-			MiddlewareServer server = new MiddlewareServer(id, password, port, dbLogPath, sysLogPath, serverMap);
+			MiddlewareServer server = new MiddlewareServer(id, password, port, dbLogPath, sysLogPath, namedPipePath, serverMap);
 			server.run();
 		}
 		catch (ParseException e)
@@ -463,5 +490,10 @@ public class MiddlewareServer
 	public String getPassword()
 	{
 		return password;
+	}
+
+	public RandomAccessFile getNamedPipeFile()
+	{
+		return namedPipeFile;
 	}
 }
