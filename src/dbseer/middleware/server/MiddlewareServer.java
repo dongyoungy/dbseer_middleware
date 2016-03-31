@@ -106,7 +106,7 @@ public class MiddlewareServer
 		}
 
 		// open named pipe.
-		namedPipeFile = new RandomAccessFile(this.namedPipePath, "w");
+		namedPipeFile = new RandomAccessFile(this.namedPipePath, "rwd");
 		if (namedPipeFile == null)
 		{
 			throw new Exception("Cannot open the named pipe for communication with dbseerroute. " +
@@ -170,7 +170,7 @@ public class MiddlewareServer
 		try
 		{
 			Log.info("Start monitoring");
-			
+
 			// start logging at MaxScale dbseerroute.
 			namedPipeFile.writeBytes("1");
 
