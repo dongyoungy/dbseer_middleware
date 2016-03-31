@@ -43,6 +43,20 @@ public class MiddlewareClientTest
 		CommandLineParser clParser = new DefaultParser();
 		Options options = new Options();
 
+		Option idOption = Option.builder("i")
+				.hasArg()
+				.argName("ID")
+				.required(true)
+				.desc("middleware user id")
+				.build();
+
+		Option passwordOption = Option.builder("w")
+				.hasArg()
+				.argName("PASSWORD")
+				.required(true)
+				.desc("middleware user password")
+				.build();
+
 		Option hostOption = Option.builder("h")
 				.hasArg()
 				.argName("HOST")
@@ -70,6 +84,8 @@ public class MiddlewareClientTest
 				.desc("print this message")
 				.build();
 
+		options.addOption(idOption);
+		options.addOption(passwordOption);
 		options.addOption(hostOption);
 		options.addOption(portOption);
 		options.addOption(logOption);
@@ -86,13 +102,15 @@ public class MiddlewareClientTest
 			}
 
 			int port;
-			String host, logPath;
+			String host, logPath, id, password;
 
+			id = line.getOptionValue("i");
+			password = line.getOptionValue("w");
 			port = Integer.parseInt(line.getOptionValue("p"));
 			host = line.getOptionValue("h");
 			logPath = line.getOptionValue("d");
 
-			MiddlewareClient client = new MiddlewareClient(host, port, logPath);
+			MiddlewareClient client = new MiddlewareClient(id, password, host, port, logPath);
 			client.setLogLevel(Log.LEVEL_DEBUG);
 
 			Future clientFuture = clientExecutor.submit(client);
