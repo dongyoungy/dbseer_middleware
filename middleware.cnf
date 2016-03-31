@@ -1,4 +1,8 @@
 [dbseer_middleware]
+# middleware user id
+id=dbseer
+# # middleware user password
+password=dbseer
 # port that middleware listens to for the communication with DBSeer
 listen_port=3555
 
