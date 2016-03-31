@@ -45,6 +45,8 @@ public class MiddlewareClient extends Observable implements Runnable
 {
 	private static final int MAX_RETRY = 3;
 
+	private String id;
+	private String password;
 	private String host;
 	private int port;
 	private int retry;
@@ -63,9 +65,11 @@ public class MiddlewareClient extends Observable implements Runnable
 
 	private ArrayList<String> serverNameList = null;
 
-	public MiddlewareClient(String host, int port, String logPath)
+	public MiddlewareClient(String host, String id, String password, int port, String logPath)
 	{
 		this.retry = 0;
+		this.id = id;
+		this.password = password;
 		this.host = host;
 		this.port = port;
 		this.logPath = logPath;
@@ -172,9 +176,11 @@ public class MiddlewareClient extends Observable implements Runnable
 
 		if (channel != null)
 		{
+			String idPassword = this.id + "@" + this.password;
 			ByteBuf b = Unpooled.buffer();
 			b.writeInt(MiddlewareConstants.PACKET_START_MONITORING);
-			b.writeInt(0);
+			b.writeInt(idPassword.getBytes("UTF-8").length);
+			b.writeBytes(idPassword.getBytes("UTF-8"));
 			channel.writeAndFlush(b);
 		}
 		Log.debug("Start monitoring packet sent.");

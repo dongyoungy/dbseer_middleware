@@ -49,6 +49,8 @@ import java.util.concurrent.Executors;
  */
 public class MiddlewareServer
 {
+	private String id;
+	private String password;
 	private int port;
 	private String dbLogPath;
 	private String sysLogPath;
@@ -64,8 +66,10 @@ public class MiddlewareServer
 
 	private ChannelGroup connectedChannelGroup;
 
-	public MiddlewareServer(int port, String dbLogPath, String sysLogPath, Map<String, Server> servers)
+	public MiddlewareServer(String id, String password, int port, String dbLogPath, String sysLogPath, Map<String, Server> servers)
 	{
+		this.id = id;
+		this.password = password;
 		this.port = port;
 		this.dbLogPath = dbLogPath;
 		this.sysLogPath = sysLogPath;
@@ -316,6 +320,16 @@ public class MiddlewareServer
 			{
 				throw new Exception("'dbseer_middleware' section cannot be found in the configuration file.");
 			}
+			String id = section.get("id");
+			if (id == null)
+			{
+				throw new Exception("'id' is missing in the configuration file.");
+			}
+			String password = section.get("password");
+			if (password == null)
+			{
+				throw new Exception("'password' is missing in the configuration file.");
+			}
 			String portStr = section.get("listen_port");
 			if (portStr != null)
 			{
@@ -379,7 +393,7 @@ public class MiddlewareServer
 				serverMap.put(server, s);
 			}
 
-			MiddlewareServer server = new MiddlewareServer(port, dbLogPath, sysLogPath, serverMap);
+			MiddlewareServer server = new MiddlewareServer(id, password, port, dbLogPath, sysLogPath, serverMap);
 			server.run();
 		}
 		catch (ParseException e)
@@ -439,5 +453,15 @@ public class MiddlewareServer
 		}
 
 		return new Server(name, dbHost, dbPort, dbUser, dbPassword, sshUser, monitorDir, monitorScript, logPath);
+	}
+
+	public String getId()
+	{
+		return id;
+	}
+
+	public String getPassword()
+	{
+		return password;
 	}
 }

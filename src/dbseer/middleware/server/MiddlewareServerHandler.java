@@ -93,23 +93,43 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 		if (header == MiddlewareConstants.PACKET_START_MONITORING)
 		{
 			Log.debug("start monitoring");
-			// stop monitoring if it is running.
-			server.stopMonitoring();
 
-			boolean isStarted;
-			isStarted = server.startMonitoring();
+			// check id and password
+			String idPassword = packet.body;
+			String[] tokens = idPassword.split("@", 2);
+			String receivedId = tokens[0];
+			String receivedPassword = tokens[1];
+
 			ByteBuf ans = Unpooled.buffer();
-			if (isStarted)
+
+			if (!receivedId.equals(server.getId()) || !receivedPassword.equals(server.getPassword()))
 			{
-				Log.debug("start monitoring success");
-				ans.writeInt(MiddlewareConstants.PACKET_START_MONITORING_SUCCESS);
+				Log.debug("start monitoring failure: authentication failed.");
+				ans.writeInt(MiddlewareConstants.PACKET_START_MONITORING_FAILURE);
+				String reason = "Authentication failed.";
+				ans.writeInt(reason.getBytes("UTF-8").length);
+				ans.writeBytes(reason.getBytes("UTF-8"));
 			}
 			else
 			{
-				Log.debug("start monitoring failure");
-				ans.writeInt(MiddlewareConstants.PACKET_START_MONITORING_FAILURE);
+				// stop monitoring if it is running.
+				server.stopMonitoring();
+
+				boolean isStarted;
+				isStarted = server.startMonitoring();
+				if (isStarted)
+				{
+					Log.debug("start monitoring success");
+					ans.writeInt(MiddlewareConstants.PACKET_START_MONITORING_SUCCESS);
+					ans.writeInt(0);
+				}
+				else
+				{
+					Log.debug("start monitoring failure");
+					ans.writeInt(MiddlewareConstants.PACKET_START_MONITORING_FAILURE);
+					ans.writeInt(0);
+				}
 			}
-			ans.writeInt(0);
 			ctx.writeAndFlush(ans);
 		}
 		else if (header == MiddlewareConstants.PACKET_PING)

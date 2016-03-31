@@ -22,7 +22,7 @@ package dbseer.middleware.constant;
 public class MiddlewareConstants
 {
 	public static final int QUEUE_SIZE = 1800; // equi. 30 min logs
-	public static final String PROTOCOL_VERSION = "v0.1";
+	public static final String PROTOCOL_VERSION = "v0.2";
 
 	public static final String SERVER_STRING_DELIMITER = ",";
 	public static final String TX_LOG_PREFIX = "tx.log";

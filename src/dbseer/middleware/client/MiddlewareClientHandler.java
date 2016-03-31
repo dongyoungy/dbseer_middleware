@@ -70,7 +70,14 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 		{
 			Log.debug("stop monitoring failed.");
 			// set monitoring to false
-			client.setMonitoring(false);
+			if (packet.body.isEmpty())
+			{
+				client.setMonitoring(false);
+			}
+			else
+			{
+				client.setMonitoring(false, packet.body);
+			}
 		}
 		else if (header == MiddlewareConstants.PACKET_SERVER_LIST)
 		{
