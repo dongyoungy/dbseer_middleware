@@ -143,6 +143,7 @@ public class MiddlewareClientTest
 		catch (Exception e)
 		{
 			Log.error(e.getMessage());
+			e.printStackTrace();
 		}
 
 	}
