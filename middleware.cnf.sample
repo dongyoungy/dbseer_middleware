@@ -6,6 +6,9 @@ password=dbseer
 # port that middleware listens to for the communication with DBSeer
 listen_port=3555
 
+# path of the named pipe that dbseerroute uses to communicate with the middleware.
+named_pipe=/tmp/dbseerroute
+
 # middleware reads the SQL performance log from this file.
 dblog_path=/tmp/maxscale/perf.log
 
