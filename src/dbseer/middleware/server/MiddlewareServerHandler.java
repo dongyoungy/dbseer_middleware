@@ -78,7 +78,7 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 
 		if (server.getConnectedChannelGroup().size() > 0 && !server.getConnectedChannelGroup().contains(ctx.channel()))
 		{
-			ByteBuf ans = ctx.alloc().buffer();
+			ByteBuf ans = Unpooled.buffer();
 			ans.writeInt(MiddlewareConstants.PACKET_CONNECTION_DENIED);
 			ans.writeInt(0);
 			ctx.writeAndFlush(ans);
@@ -100,7 +100,7 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			String receivedId = tokens[0];
 			String receivedPassword = tokens[1];
 
-			ByteBuf ans = ctx.alloc().buffer();
+			ByteBuf ans = Unpooled.buffer();
 
 			if (!receivedId.equals(server.getId()) || !receivedPassword.equals(server.getPassword()))
 			{
@@ -142,7 +142,7 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 		}
 		else if (header == MiddlewareConstants.PACKET_PING)
 		{
-			ByteBuf ans = ctx.alloc().buffer();
+			ByteBuf ans = Unpooled.buffer();
 			ans.writeInt(MiddlewareConstants.PACKET_PING);
 			ans.writeInt(0);
 			ctx.writeAndFlush(ans);
@@ -153,7 +153,7 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			// stop monitoring
 			server.stopMonitoring();
 
-			ByteBuf ans = ctx.alloc().buffer();
+			ByteBuf ans = Unpooled.buffer();
 			// check monitoring
 			if (server.isMonitoring())
 			{
@@ -172,7 +172,7 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 		else if (header == MiddlewareConstants.PACKET_CHECK_VERSION)
 		{
 			String clientVersion = packet.body;
-			ByteBuf ans = ctx.alloc().buffer();
+			ByteBuf ans = Unpooled.buffer();
 			if (clientVersion.equalsIgnoreCase(MiddlewareConstants.PROTOCOL_VERSION))
 			{
 				ans.writeInt(MiddlewareConstants.PACKET_CHECK_VERSION_SUCCESS);
@@ -190,7 +190,7 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 		else if (header == MiddlewareConstants.PACKET_REQUEST_SERVER_LIST)
 		{
 			String serverList = server.getServerList();
-			ByteBuf ans = ctx.alloc().buffer();
+			ByteBuf ans = Unpooled.buffer();
 			ans.writeInt(MiddlewareConstants.PACKET_SERVER_LIST);
 			ans.writeInt(serverList.getBytes("UTF-8").length);
 			ans.writeBytes(serverList.getBytes("UTF-8"));
@@ -206,7 +206,7 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			{
 				log += aLog;
 			}
-			ByteBuf ans = ctx.alloc().buffer(8 + log.getBytes("UTF-8").length);
+			ByteBuf ans = Unpooled.buffer(8 + log.getBytes("UTF-8").length);
 			ans.writeInt(MiddlewareConstants.PACKET_TX_LOG);
 			ans.writeInt(log.getBytes("UTF-8").length);
 			ans.writeBytes(log.getBytes("UTF-8"));
@@ -223,7 +223,7 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			{
 				log += aLog;
 			}
-			ByteBuf ans = ctx.alloc().buffer(8 + log.getBytes("UTF-8").length);
+			ByteBuf ans = Unpooled.buffer(8 + log.getBytes("UTF-8").length);
 			ans.writeInt(MiddlewareConstants.PACKET_SYS_LOG);
 			ans.writeInt(log.getBytes("UTF-8").length);
 			ans.writeBytes(log.getBytes("UTF-8"));
