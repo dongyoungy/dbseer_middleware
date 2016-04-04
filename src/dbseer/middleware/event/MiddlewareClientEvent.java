@@ -28,12 +28,19 @@ public class MiddlewareClientEvent
 	public static final int ERROR = 3;
 
 	public int event;
+	public Exception e;
 	public String error;
 	public String serverStr;
 
 	public MiddlewareClientEvent(int event)
 	{
 		this.event = event;
+	}
+
+	public MiddlewareClientEvent(int event, Exception e)
+	{
+		this.event = event;
+		this.e = e;
 	}
 
 	public MiddlewareClientEvent(int event, String error)
