@@ -148,7 +148,7 @@ public class MiddlewareServer
 						protected void initChannel(SocketChannel ch) throws Exception
 						{
 							ChannelPipeline p = ch.pipeline();
-							p.addLast(new IdleStateHandler(10, 0, 0));
+//							p.addLast(new IdleStateHandler(10, 0, 0));
 							p.addLast(ZlibCodecFactory.newZlibEncoder(ZlibWrapper.GZIP));
 							p.addLast(ZlibCodecFactory.newZlibDecoder(ZlibWrapper.GZIP));
 							p.addLast(new MiddlewarePacketDecoder(), new MiddlewareServerHandler(server));
