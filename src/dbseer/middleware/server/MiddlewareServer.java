@@ -30,6 +30,8 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.compression.ZlibCodecFactory;
+import io.netty.handler.codec.compression.ZlibWrapper;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.apache.commons.cli.*;
@@ -147,6 +149,8 @@ public class MiddlewareServer
 						{
 							ChannelPipeline p = ch.pipeline();
 							p.addLast(new IdleStateHandler(10, 0, 0));
+							p.addLast(ZlibCodecFactory.newZlibEncoder(ZlibWrapper.GZIP));
+							p.addLast(ZlibCodecFactory.newZlibDecoder(ZlibWrapper.GZIP));
 							p.addLast(new MiddlewarePacketDecoder(), new MiddlewareServerHandler(server));
 						}
 					});

@@ -28,6 +28,8 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.compression.ZlibCodecFactory;
+import io.netty.handler.codec.compression.ZlibWrapper;
 import io.netty.handler.timeout.IdleStateHandler;
 
 import java.io.File;
@@ -115,6 +117,8 @@ public class MiddlewareClient extends Observable implements Runnable
 						{
 							ChannelPipeline p = ch.pipeline();
 							p.addLast(new IdleStateHandler(10, 0, 0));
+							p.addLast(ZlibCodecFactory.newZlibEncoder(ZlibWrapper.GZIP));
+							p.addLast(ZlibCodecFactory.newZlibDecoder(ZlibWrapper.GZIP));
 							p.addLast(new MiddlewarePacketDecoder(),new MiddlewareClientHandler(client));
 						}
 					});
