@@ -205,6 +205,7 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			for (String aLog : logs)
 			{
 				log += aLog;
+				Log.debug("log size = " + logs.size());
 			}
 			ByteBuf ans = Unpooled.buffer(8 + log.getBytes("UTF-8").length);
 			ans.writeInt(MiddlewareConstants.PACKET_TX_LOG);
