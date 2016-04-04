@@ -95,11 +95,11 @@ public class MiddlewareClient extends Observable implements Runnable
 
 		try
 		{
-			// set up log files
-//			File dbLogFile = new File(dbLogPath);
-//			File sysLogFile = new File(sysLogPath);
-//			final PrintWriter dbLogWriter = new PrintWriter(new FileWriter(dbLogFile, false));
-//			final PrintWriter sysLogWriter = new PrintWriter(new FileWriter(sysLogFile, false));
+			File logDir = new File(logPath);
+			if (!logDir.exists())
+			{
+				logDir.mkdirs();
+			}
 
 			final MiddlewareClient client = this;
 
