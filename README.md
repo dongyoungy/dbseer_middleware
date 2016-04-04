@@ -4,12 +4,15 @@ DBSeer middleware collects various statistics from OS and DBMS and transfers the
 The middleware requires MariaDB MaxScale with the dbseerroute plugin, which is a custom router plugin that is necessary to collect required transaction information. 
 The MariaDB MaxScale with the dbseerroute plugin is available [here](https://github.com/dongyoungy/MaxScale).
 
+**NOTE: DBSeer middleware and the dbseerroute plugin require `autocommit` option from MySQL/MariaDB to be OFF as it detects 'rollback' or 'commit' statements to distinguish different transactions.**
+
+
 ## Installation
 
 DBSeer middleware requires the following:
 
 * Java 1.7+
-* Ant
+* Apache Ant
 
 DBSeer middleware can be compiled with `ant` command:
 
