@@ -255,6 +255,11 @@ public class Server
 		this.monitorProcess = monitorProcess;
 	}
 
+	public LogTailerListener getLogTailerListener()
+	{
+		return logTailerListener;
+	}
+
 	public LinkedBlockingQueue<String> getLogQueue()
 	{
 		return logQueue;

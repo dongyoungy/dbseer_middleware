@@ -199,14 +199,14 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 		}
 		else if (header == MiddlewareConstants.PACKET_REQUEST_TX_LOG)
 		{
-			String log = "";
-			ArrayList<String> logs = new ArrayList<String>();
-			server.getDbLogQueue().drainTo(logs);
-			for (String aLog : logs)
-			{
-				log += aLog;
-				Log.debug("log size = " + logs.size());
-			}
+//			String log = "";
+//			ArrayList<String> logs = new ArrayList<String>();
+//			server.getDbLogQueue().drainTo(logs);
+//			for (String aLog : logs)
+//			{
+//				log += aLog;
+//			}
+			String log = server.getDbLogListener().getString();
 			ByteBuf ans = Unpooled.buffer(8 + log.getBytes("UTF-8").length);
 			ans.writeInt(MiddlewareConstants.PACKET_TX_LOG);
 			ans.writeInt(log.getBytes("UTF-8").length);
@@ -218,12 +218,13 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 		{
 			String serverStr = packet.body;
 			String log = serverStr + MiddlewareConstants.SERVER_STRING_DELIMITER;
-			ArrayList<String> logs = new ArrayList<>();
-			server.getServer(serverStr).getLogQueue().drainTo(logs);
-			for (String aLog : logs)
-			{
-				log += aLog;
-			}
+//			ArrayList<String> logs = new ArrayList<>();
+//			server.getServer(serverStr).getLogQueue().drainTo(logs);
+//			for (String aLog : logs)
+//			{
+//				log += aLog;
+//			}
+			log += server.getServer(serverStr).getLogTailerListener().getString();
 			ByteBuf ans = Unpooled.buffer(8 + log.getBytes("UTF-8").length);
 			ans.writeInt(MiddlewareConstants.PACKET_SYS_LOG);
 			ans.writeInt(log.getBytes("UTF-8").length);

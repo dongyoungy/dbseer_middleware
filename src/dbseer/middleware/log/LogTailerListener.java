@@ -30,14 +30,16 @@ public class LogTailerListener extends TailerListenerAdapter
 {
 	boolean discardFirstline;
 	private LinkedBlockingQueue<String> queue;
+	private String logStr;
 
 	public LogTailerListener(LinkedBlockingQueue<String> queue, boolean discard)
 	{
-		this.queue = queue;
+//		this.queue = queue;
+		this.logStr = "";
 		this.discardFirstline = discard;
 	}
 
-	public void handle(String line, long offset)
+	public synchronized void handle(String line, long offset)
 	{
 		if (discardFirstline)
 		{
@@ -45,10 +47,18 @@ public class LogTailerListener extends TailerListenerAdapter
 			return;
 		}
 		
-		if (!queue.offer(line + System.lineSeparator()))
-		{
-			queue.poll();
-			queue.offer(line + System.lineSeparator());
-		}
+//		if (!queue.offer(line + System.lineSeparator()))
+//		{
+//			queue.poll();
+//			queue.offer(line + System.lineSeparator());
+//		}
+		logStr = logStr.concat(line).concat(System.lineSeparator());
+	}
+
+	public synchronized String getString()
+	{
+		String returnStr = logStr;
+		logStr = "";
+		return returnStr;
 	}
 }

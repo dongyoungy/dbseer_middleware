@@ -68,6 +68,7 @@ public class MiddlewareServer
 	private RandomAccessFile namedPipeFile = null;
 	private ExecutorService tailerExecutor = null;
 	private LogTailer dbLogTailer = null;
+	private LogTailerListener dbLogListener = null;
 
 	private LinkedBlockingQueue<String> dbLogQueue;
 
@@ -255,7 +256,7 @@ public class MiddlewareServer
 		dbLogFile = new File(dbLogPath);
 
 		// discard first line for db log because of a possible truncates.
-		LogTailerListener dbLogListener = new LogTailerListener(dbLogQueue, true);
+		dbLogListener = new LogTailerListener(dbLogQueue, true);
 
 		// starts from the last line for db log.
 		dbLogTailer = new LogTailer(dbLogFile, dbLogListener, 250, -1);
@@ -504,6 +505,11 @@ public class MiddlewareServer
 	public String getPassword()
 	{
 		return password;
+	}
+
+	public LogTailerListener getDbLogListener()
+	{
+		return dbLogListener;
 	}
 
 	public RandomAccessFile getNamedPipeFile()
