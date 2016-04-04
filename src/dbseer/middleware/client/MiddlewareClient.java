@@ -22,6 +22,7 @@ import dbseer.middleware.event.MiddlewareClientEvent;
 import dbseer.middleware.packet.MiddlewarePacketDecoder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -106,6 +107,7 @@ public class MiddlewareClient extends Observable implements Runnable
 			Bootstrap b = new Bootstrap();
 			b.group(group)
 					.channel(NioSocketChannel.class)
+					.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
 					.handler(new ChannelInitializer<SocketChannel>()
 					{
 						@Override

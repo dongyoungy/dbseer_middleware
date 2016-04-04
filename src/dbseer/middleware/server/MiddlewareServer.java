@@ -23,6 +23,7 @@ import dbseer.middleware.log.LogTailer;
 import dbseer.middleware.log.LogTailerListener;
 import dbseer.middleware.packet.MiddlewarePacketDecoder;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
@@ -106,6 +107,13 @@ public class MiddlewareServer
 		}
 
 		// open named pipe.
+		File checkPipeFile = new File(this.namedPipePath);
+		if (checkPipeFile == null || !checkPipeFile.exists() || checkPipeFile.isDirectory())
+		{
+			throw new Exception("Cannot open the named pipe for communication with dbseerroute. " +
+					"You must run Maxscale with dbseerroute with correct named pipe first.");
+		}
+
 		namedPipeFile = new RandomAccessFile(this.namedPipePath, "rwd");
 		if (namedPipeFile == null)
 		{
@@ -128,6 +136,8 @@ public class MiddlewareServer
 			b.group(bossGroup, workerGroup)
 					.channel(NioServerSocketChannel.class)
 					.option(ChannelOption.SO_BACKLOG, 128)
+					.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+					.childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
 					.childOption(ChannelOption.SO_KEEPALIVE, true)
 					.handler(new MiddlewareServerConnectionHandler(server))
 					.childHandler(new ChannelInitializer<SocketChannel>()
