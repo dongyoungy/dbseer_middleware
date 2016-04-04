@@ -28,6 +28,7 @@ import java.sql.SQLException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by Dong Young Yoon on 1/10/16.
@@ -52,7 +53,8 @@ public class Server
 	Process monitorProcess;
 	File logFile;
 
-	private ArrayBlockingQueue<String> logQueue;
+//	private ArrayBlockingQueue<String> logQueue;
+	private LinkedBlockingQueue<String> logQueue;
 	private LogTailerListener logTailerListener;
 	private LogTailer logTailer;
 	private ExecutorService tailerExecutor;
@@ -68,7 +70,8 @@ public class Server
 		this.monitorDir = monitorDir;
 		this.monitorScript = monitorScript;
 		this.logPath = logPath;
-		this.logQueue = new ArrayBlockingQueue<>(MiddlewareConstants.QUEUE_SIZE);
+//		this.logQueue = new ArrayBlockingQueue<>(MiddlewareConstants.QUEUE_SIZE);
+		this.logQueue = new LinkedBlockingQueue<>();
 	}
 
 	public void printLogInfo()
@@ -252,7 +255,7 @@ public class Server
 		this.monitorProcess = monitorProcess;
 	}
 
-	public ArrayBlockingQueue<String> getLogQueue()
+	public LinkedBlockingQueue<String> getLogQueue()
 	{
 		return logQueue;
 	}
