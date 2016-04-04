@@ -291,7 +291,7 @@ public class MiddlewareServer
 	public static void main(String[] args)
 	{
 		// set up logger
-		Log.set(Log.LEVEL_DEBUG); // DEBUG for now.
+		Log.set(Log.LEVEL_INFO);
 
 		String configPath = "./middleware.cnf";
 		// handle command-line options with commons CLI
