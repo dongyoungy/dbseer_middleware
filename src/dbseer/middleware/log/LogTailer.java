@@ -56,6 +56,8 @@ public class LogTailer implements Runnable
 	 */
 	private final LogTailerListener listener;
 
+	private boolean resetFilePositionIfOverwrittenWithTheSameLength;
+
 	/**
 	 * The tailer will run as long as this value is true.
 	 */
@@ -73,6 +75,19 @@ public class LogTailer implements Runnable
 		// Save and prepare the listener
 		this.listener = listener;
 		this.startOffset = startOffset;
+	}
+
+	public LogTailer(File file, LogTailerListener listener, long delayMillis, long startOffset, boolean resetFilePositionIfOverwrittenWithTheSameLength)
+	{
+		this.file = file;
+		this.delayMillis = delayMillis;
+
+		this.inbuf = new byte[DEFAULT_BUFSIZE];
+
+		// Save and prepare the listener
+		this.listener = listener;
+		this.startOffset = startOffset;
+		this.resetFilePositionIfOverwrittenWithTheSameLength = resetFilePositionIfOverwrittenWithTheSameLength;
 	}
 
 	@Override
@@ -153,12 +168,15 @@ public class LogTailer implements Runnable
                          * This can happen if the file is truncated or overwritten with the exact same length of
                          * information. In cases like this, the file position needs to be reset
                          */
-						position = 0;
-						reader.seek(position); // cannot be null here
+						if (resetFilePositionIfOverwrittenWithTheSameLength)
+						{
+							position = 0;
+							reader.seek(position); // cannot be null here
 
-						// Now we can read new lines
-						position = readLines(reader);
-						last = System.currentTimeMillis();
+							// Now we can read new lines
+							position = readLines(reader);
+							last = System.currentTimeMillis();
+						}
 					} else {
 						Thread.sleep(DEFAULT_DELAY_MILLIS);
 					}

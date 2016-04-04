@@ -259,7 +259,7 @@ public class MiddlewareServer
 		dbLogListener = new LogTailerListener(dbLogQueue, true);
 
 		// starts from the last line for db log.
-		dbLogTailer = new LogTailer(dbLogFile, dbLogListener, 250, -1);
+		dbLogTailer = new LogTailer(dbLogFile, dbLogListener, 250, -1, false);
 
 		tailerExecutor = Executors.newFixedThreadPool(1);
 		tailerExecutor.submit(dbLogTailer);

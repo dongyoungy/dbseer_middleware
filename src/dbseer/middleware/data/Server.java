@@ -155,7 +155,7 @@ public class Server
 		}
 
 		logTailerListener = new LogTailerListener(logQueue, false);
-		logTailer = new LogTailer(logFile, logTailerListener, 250, 0);
+		logTailer = new LogTailer(logFile, logTailerListener, 250, 0, false);
 		tailerExecutor = Executors.newFixedThreadPool(1);
 		tailerExecutor.submit(logTailer);
 
