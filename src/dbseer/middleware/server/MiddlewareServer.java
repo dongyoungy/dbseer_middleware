@@ -45,6 +45,7 @@ import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by Dong Young Yoon on 11/27/15.
@@ -68,7 +69,7 @@ public class MiddlewareServer
 	private ExecutorService tailerExecutor = null;
 	private LogTailer dbLogTailer = null;
 
-	private ArrayBlockingQueue<String> dbLogQueue;
+	private LinkedBlockingQueue<String> dbLogQueue;
 
 	private ChannelGroup connectedChannelGroup;
 
@@ -177,7 +178,8 @@ public class MiddlewareServer
 	public boolean startMonitoring()
 	{
 		// initialize queues
-		dbLogQueue = new ArrayBlockingQueue<String>(MiddlewareConstants.QUEUE_SIZE);
+//		dbLogQueue = new ArrayBlockingQueue<String>(MiddlewareConstants.QUEUE_SIZE);
+		dbLogQueue = new LinkedBlockingQueue<>();
 
 		try
 		{
@@ -262,7 +264,7 @@ public class MiddlewareServer
 		tailerExecutor.submit(dbLogTailer);
 	}
 
-	public ArrayBlockingQueue<String> getDbLogQueue()
+	public LinkedBlockingQueue<String> getDbLogQueue()
 	{
 		return dbLogQueue;
 	}

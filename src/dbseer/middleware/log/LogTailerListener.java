@@ -21,6 +21,7 @@ import org.apache.commons.io.input.TailerListenerAdapter;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by Dong Young Yoon on 11/30/2015
@@ -28,9 +29,9 @@ import java.util.concurrent.BlockingQueue;
 public class LogTailerListener extends TailerListenerAdapter
 {
 	boolean discardFirstline;
-	private ArrayBlockingQueue<String> queue;
+	private LinkedBlockingQueue<String> queue;
 
-	public LogTailerListener(ArrayBlockingQueue<String> queue, boolean discard)
+	public LogTailerListener(LinkedBlockingQueue<String> queue, boolean discard)
 	{
 		this.queue = queue;
 		this.discardFirstline = discard;
