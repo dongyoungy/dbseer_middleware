@@ -110,6 +110,7 @@ public class MiddlewareClient extends Observable implements Runnable
 			b.group(group)
 					.channel(NioSocketChannel.class)
 					.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+					.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
 					.handler(new ChannelInitializer<SocketChannel>()
 					{
 						@Override
