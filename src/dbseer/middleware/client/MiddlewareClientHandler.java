@@ -149,7 +149,7 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 	{
 		Log.error(this.getClass().getCanonicalName(), "handler caught exception: ", cause);
 		// set monitoring to false
-		client.setMonitoring(false, cause.toString());
+		client.setMonitoring(false, cause.getMessage());
 		cause.printStackTrace();
 		ctx.close();
 	}
