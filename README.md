@@ -13,6 +13,7 @@ DBSeer middleware requires the following:
 
 * Java 1.7+
 * Apache Ant
+* Python 2.7+ and MySQL-python (for *rs-sysmon*)
 
 DBSeer middleware can be compiled with `ant` command:
 
@@ -45,7 +46,7 @@ The diagram below demonstrates a basic setup of DBSeer middleware and MaxScale f
 ![DBSeer Layout](http://i.imgur.com/KeHG8Ll.png)
 
 DBSeer middleware and MariaDB MaxScale must run on the same machine (i.e., ***System Y***). The middleware needs to be deployed at the MySQL/MariaDB server side in order to collect OS/DBMS statistics (i.e., ***System Z***). 
-The middleware includes a variant of system monitoring utility called *rs-sysmon* under the directory *rs-sysmon2*. The middleware runs the utility remotely via ssh to collect OS/DBMS statistics.
+The middleware includes a variant of system monitoring utility called *rs-sysmon* under the directory *rs-sysmon2*. *rs-sysmon* requires Python 2.7+ and MySQL-python installed, so in this example setup, they need to be installed in ***System Z***. The middleware runs the utility remotely via ssh to collect OS/DBMS statistics.
 
 Using the above diagram as an example, a user must have a system account that can access ***System Z*** via *ssh* without authorization from ***System Y***. This can be done by adding the public key of the account at ***System Y*** as an authorized key for the account at ***System Z***. Using `ssh-copy-id` is the easiest way to set this up.
 
