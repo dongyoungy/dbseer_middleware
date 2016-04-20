@@ -336,7 +336,7 @@ public class MiddlewareClient extends Observable implements Runnable
 	{
 		if (channel != null && channel.isActive())
 		{
-			channel.close().sync();
+			channel.disconnect();
 		}
 	}
 
