@@ -227,7 +227,7 @@ public class MiddlewareServer
 			// stop transaction log tailers.
 			if (tailerExecutor != null)
 			{
-				tailerExecutor.shutdown();
+				tailerExecutor.shutdownNow();
 			}
 		}
 		catch (Exception e)
