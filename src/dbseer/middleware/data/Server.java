@@ -171,7 +171,7 @@ public class Server
 
 		if (tailerExecutor != null)
 		{
-			tailerExecutor.shutdown();
+			tailerExecutor.shutdownNow();
 		}
 	}
 
