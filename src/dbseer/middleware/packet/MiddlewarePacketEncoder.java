@@ -16,41 +16,23 @@
 
 package dbseer.middleware.packet;
 
-import java.io.UnsupportedEncodingException;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.MessageToByteEncoder;
 
 /**
- * Created by Dong Young Yoon on 12/2/15.
+ * Created by Dong Young Yoon on 5/6/16.
  */
-public class MiddlewarePacket
+public class MiddlewarePacketEncoder extends MessageToByteEncoder<MiddlewarePacket>
 {
-	public int header;
-	public int length;
-	public String body;
-
-	public MiddlewarePacket(int header, int length, String body)
+	@Override
+	protected void encode(ChannelHandlerContext ctx, MiddlewarePacket packet, ByteBuf buf) throws Exception
 	{
-		this.header = header;
-		this.length = length;
-		this.body = body;
-	}
-
-	public MiddlewarePacket(int header, String body)
-	{
-		this.header = header;
-		this.body = body;
-		try
+		buf.writeInt(packet.header);
+		buf.writeInt(packet.length);
+		if (packet.length > 0)
 		{
-			this.length = body.getBytes("UTF-8").length;
+			buf.writeBytes(packet.body.getBytes("UTF-8"));
 		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
-		}
-	}
-
-	public MiddlewarePacket(int header)
-	{
-		this.header = header;
-		this.length = 0;
 	}
 }

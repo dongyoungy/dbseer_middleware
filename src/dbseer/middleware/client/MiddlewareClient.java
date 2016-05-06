@@ -19,6 +19,7 @@ package dbseer.middleware.client;
 import com.esotericsoftware.minlog.Log;
 import dbseer.middleware.constant.MiddlewareConstants;
 import dbseer.middleware.event.MiddlewareClientEvent;
+import dbseer.middleware.packet.MiddlewarePacket;
 import dbseer.middleware.packet.MiddlewarePacketDecoder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
@@ -126,11 +127,13 @@ public class MiddlewareClient extends Observable implements Runnable
 			channel = f.channel();
 			Log.debug("Connected to the middleware.");
 
-			ByteBuf buf = Unpooled.buffer();
-			buf.writeInt(MiddlewareConstants.PACKET_CHECK_VERSION);
-			buf.writeInt(MiddlewareConstants.PROTOCOL_VERSION.getBytes("UTF-8").length);
-			buf.writeBytes(MiddlewareConstants.PROTOCOL_VERSION.getBytes("UTF-8"));
-			channel.writeAndFlush(buf);
+			MiddlewarePacket checkPacket = new MiddlewarePacket(MiddlewareConstants.PACKET_CHECK_VERSION, MiddlewareConstants.PROTOCOL_VERSION);
+//			ByteBuf buf = Unpooled.buffer();
+//			buf.writeInt(MiddlewareConstants.PACKET_CHECK_VERSION);
+//			buf.writeInt(MiddlewareConstants.PROTOCOL_VERSION.getBytes("UTF-8").length);
+//			buf.writeBytes(MiddlewareConstants.PROTOCOL_VERSION.getBytes("UTF-8"));
+//			channel.writeAndFlush(buf);
+			channel.writeAndFlush(checkPacket);
 
 			channel.closeFuture().sync();
 		}
@@ -183,11 +186,14 @@ public class MiddlewareClient extends Observable implements Runnable
 		if (channel != null)
 		{
 			String idPassword = this.id + "@" + this.password;
-			ByteBuf b = Unpooled.buffer();
-			b.writeInt(MiddlewareConstants.PACKET_START_MONITORING);
-			b.writeInt(idPassword.getBytes("UTF-8").length);
-			b.writeBytes(idPassword.getBytes("UTF-8"));
-			channel.writeAndFlush(b);
+//			ByteBuf b = Unpooled.buffer();
+//			b.writeInt(MiddlewareConstants.PACKET_START_MONITORING);
+//			b.writeInt(idPassword.getBytes("UTF-8").length);
+//			b.writeBytes(idPassword.getBytes("UTF-8"));
+//			channel.writeAndFlush(b);
+
+			MiddlewarePacket packet = new MiddlewarePacket(MiddlewareConstants.PACKET_START_MONITORING, idPassword);
+			channel.writeAndFlush(packet);
 		}
 		Log.debug("Start monitoring packet sent.");
 		retry++;
@@ -198,10 +204,13 @@ public class MiddlewareClient extends Observable implements Runnable
 		this.stopExecutors();
 		if (channel != null)
 		{
-			ByteBuf b = Unpooled.buffer();
-			b.writeInt(MiddlewareConstants.PACKET_STOP_MONITORING);
-			b.writeInt(0);
-			channel.writeAndFlush(b);
+//			ByteBuf b = Unpooled.buffer();
+//			b.writeInt(MiddlewareConstants.PACKET_STOP_MONITORING);
+//			b.writeInt(0);
+//			channel.writeAndFlush(b);
+
+			MiddlewarePacket packet = new MiddlewarePacket(MiddlewareConstants.PACKET_STOP_MONITORING);
+			channel.writeAndFlush(packet);
 		}
 		Log.debug("Stop monitoring packet sent.");
 
@@ -214,10 +223,13 @@ public class MiddlewareClient extends Observable implements Runnable
 	{
 		if (channel != null)
 		{
-			ByteBuf b= Unpooled.buffer();
-			b.writeInt(MiddlewareConstants.PACKET_REQUEST_SERVER_LIST);
-			b.writeInt(0);
-			channel.writeAndFlush(b);
+//			ByteBuf b= Unpooled.buffer();
+//			b.writeInt(MiddlewareConstants.PACKET_REQUEST_SERVER_LIST);
+//			b.writeInt(0);
+//			channel.writeAndFlush(b);
+
+			MiddlewarePacket packet = new MiddlewarePacket(MiddlewareConstants.PACKET_REQUEST_SERVER_LIST);
+			channel.writeAndFlush(packet);
 		}
 		Log.debug("Server list request packet sent.");
 	}

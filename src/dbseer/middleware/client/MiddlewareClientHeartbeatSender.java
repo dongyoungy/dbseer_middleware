@@ -18,6 +18,7 @@ package dbseer.middleware.client;
 
 import com.esotericsoftware.minlog.Log;
 import dbseer.middleware.constant.MiddlewareConstants;
+import dbseer.middleware.packet.MiddlewarePacket;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -39,9 +40,10 @@ public class MiddlewareClientHeartbeatSender implements Runnable
 	public void run()
 	{
 		// Let's create heartbeat Bytebufs and reuse them.
-		ByteBuf heartbeat = Unpooled.buffer();
-		heartbeat.writeInt(MiddlewareConstants.PACKET_PING);
-		heartbeat.writeInt(0);
+//		ByteBuf heartbeat = Unpooled.buffer();
+//		heartbeat.writeInt(MiddlewareConstants.PACKET_PING);
+//		heartbeat.writeInt(0);
+		MiddlewarePacket heartbeat = new MiddlewarePacket(MiddlewareConstants.PACKET_PING);
 
 		while (true)
 		{
@@ -60,7 +62,8 @@ public class MiddlewareClientHeartbeatSender implements Runnable
 				}
 
 				Log.debug("sending a heartbeat");
-				channel.write(heartbeat.retain());
+//				channel.write(heartbeat.retain());
+				channel.write(heartbeat);
 				channel.flush();
 			}
 			catch (InterruptedException e)

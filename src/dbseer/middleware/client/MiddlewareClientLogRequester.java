@@ -18,6 +18,7 @@ package dbseer.middleware.client;
 
 import com.esotericsoftware.minlog.Log;
 import dbseer.middleware.constant.MiddlewareConstants;
+import dbseer.middleware.packet.MiddlewarePacket;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -61,8 +62,9 @@ public class MiddlewareClientLogRequester implements Runnable
 	public void run()
 	{
 		// Let's create requesting Bytebufs and reuse them.
-		ByteBuf logRequest = Unpooled.buffer();
-		String str = "";
+//		ByteBuf logRequest = Unpooled.buffer();
+//		String str = "";
+		MiddlewarePacket logRequest = new MiddlewarePacket(packetHeader);
 
 		try
 		{
@@ -70,15 +72,18 @@ public class MiddlewareClientLogRequester implements Runnable
 			Thread.sleep(500);
 
 			// write header and length (mandatory!)
-			logRequest.writeInt(packetHeader);
+//			logRequest.writeInt(packetHeader);
 			if (server == null)
 			{
-				logRequest.writeInt(0);
+//				logRequest.writeInt(0);
+				logRequest.length = 0;
 			}
 			else
 			{
-				logRequest.writeInt(server.getBytes("UTF-8").length);
-				logRequest.writeBytes(server.getBytes("UTF-8"));
+//				logRequest.writeInt(server.getBytes("UTF-8").length);
+//				logRequest.writeBytes(server.getBytes("UTF-8"));
+				logRequest.length = server.getBytes("UTF-8").length;
+				logRequest.body = server;
 			}
 		}
 		catch (Exception e)
@@ -96,7 +101,8 @@ public class MiddlewareClientLogRequester implements Runnable
 		}
 
 		Log.debug("Requester sending first log requests.");
-		channel.write(logRequest.retain());
+//		channel.write(logRequest.retain());
+		channel.write(logRequest);
 		channel.flush();
 
 		while (true)
@@ -137,7 +143,8 @@ public class MiddlewareClientLogRequester implements Runnable
 					{
 						Log.debug(String.format("Requester sending OS/DBMS stat requests. (try #%d)", timeout));
 					}
-					channel.write(logRequest.retain());
+//					channel.write(logRequest.retain());
+					channel.write(logRequest);
 					channel.flush();
 					isLogReceived = false;
 				}
