@@ -21,6 +21,7 @@ import dbseer.middleware.constant.MiddlewareConstants;
 import dbseer.middleware.event.MiddlewareClientEvent;
 import dbseer.middleware.packet.MiddlewarePacket;
 import dbseer.middleware.packet.MiddlewarePacketDecoder;
+import dbseer.middleware.packet.MiddlewarePacketEncoder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -119,7 +120,11 @@ public class MiddlewareClient extends Observable implements Runnable
 						{
 							ChannelPipeline p = ch.pipeline();
 							p.addLast(new IdleStateHandler(10, 0, 0));
-							p.addLast(new MiddlewarePacketDecoder(),new MiddlewareClientHandler(client));
+							p.addLast(ZlibCodecFactory.newZlibEncoder(ZlibWrapper.ZLIB));
+							p.addLast(ZlibCodecFactory.newZlibDecoder(ZlibWrapper.ZLIB));
+							p.addLast(new MiddlewarePacketDecoder());
+							p.addLast(new MiddlewarePacketEncoder());
+							p.addLast(new MiddlewareClientHandler(client));
 						}
 					});
 
