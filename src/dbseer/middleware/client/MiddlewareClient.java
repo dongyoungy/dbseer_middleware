@@ -118,6 +118,8 @@ public class MiddlewareClient extends Observable implements Runnable
 						{
 							ChannelPipeline p = ch.pipeline();
 							p.addLast(new IdleStateHandler(10, 0, 0));
+							p.addLast(ZlibCodecFactory.newZlibEncoder(ZlibWrapper.ZLIB));
+							p.addLast(ZlibCodecFactory.newZlibDecoder(ZlibWrapper.ZLIB));
 							p.addLast(new MiddlewarePacketDecoder(),new MiddlewareClientHandler(client));
 						}
 					});
