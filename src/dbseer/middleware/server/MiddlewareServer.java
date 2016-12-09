@@ -108,6 +108,10 @@ public class MiddlewareServer
 			{
 				throw new Exception("Unable to connect to the MySQL server with the given credential.");
 			}
+			else if (!s.testMonitoringDir())
+			{
+				throw new Exception("Specified monitoring directory and script do not exist.");
+			}
 		}
 
 		// open named pipe.

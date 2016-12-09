@@ -119,6 +119,32 @@ public class Server
 		return canConnect;
 	}
 
+    public boolean testMonitoringDir()
+    {
+		try
+		{
+			String sshCmd = "ssh";
+			String sshConnection = String.format("%s@%s", sshUser, dbHost);
+			String sshEndCmd = String.format("cd %s && ls -l ./%s 1> /dev/null", monitorDir, monitorScript);
+
+			String[] cmds = {sshCmd, sshConnection, sshEndCmd};
+			ProcessBuilder pb = new ProcessBuilder(cmds);
+
+			monitorProcess = pb.start();
+			int retVal = monitorProcess.waitFor();
+
+			if (retVal != 0)
+			{
+				return false;
+			}
+		}
+		catch (Exception e)
+		{
+			 e.printStackTrace();
+		}
+		return true;
+    }
+
 	public void startMonitoring() throws Exception
 	{
 		if (monitorProcess != null)
