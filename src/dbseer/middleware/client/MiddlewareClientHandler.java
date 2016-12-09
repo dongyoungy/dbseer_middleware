@@ -33,7 +33,7 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 {
 	private MiddlewareClient client;
 	private Map<String,PrintWriter> sysWriter;
-//	private PrintWriter dbWriter;
+	private PrintWriter dbWriterRaw;
 	private ZipOutputStream dbWriter;
 
 	public MiddlewareClientHandler(MiddlewareClient client)
@@ -86,6 +86,7 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 
 			// spawn log requester
 			dbWriter = client.startTxLogRequester();
+			dbWriterRaw = client.getTxPrintWriter();
 			sysWriter = client.startSysLogRequester(serverStr);
 
 			// start heartbeat sender
@@ -99,6 +100,8 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 			// write db log.
 			dbWriter.write(packet.body.getBytes());
 			dbWriter.flush();
+			dbWriterRaw.write(packet.body);
+			dbWriterRaw.flush();
 			client.getTxLogRequester().logReceived();
 		}
 		else if (header == MiddlewareConstants.PACKET_SYS_LOG)
@@ -152,7 +155,7 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 		Log.error(this.getClass().getCanonicalName(), "handler caught exception: ", cause);
 		// set monitoring to false
 		client.setMonitoring(false, cause.getMessage());
-		cause.printStackTrace();
+//		cause.printStackTrace();
 		ctx.close();
 	}
 

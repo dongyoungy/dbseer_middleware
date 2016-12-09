@@ -16,6 +16,7 @@
 
 package dbseer.middleware.client;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.zip.ZipOutputStream;
 
@@ -35,6 +36,7 @@ public class MiddlewareClientShutdown extends Thread
 	public void run()
 	{
 		ZipOutputStream zos = client.getTxZipOutputStream();
+		File txLogFileRaw = client.getTxLogFileRaw();
 
 		try
 		{
@@ -43,6 +45,10 @@ public class MiddlewareClientShutdown extends Thread
 			{
 				zos.closeEntry();
 				zos.close();
+			}
+			if (txLogFileRaw.exists())
+			{
+				txLogFileRaw.delete();
 			}
 		}
 		catch (IOException e)

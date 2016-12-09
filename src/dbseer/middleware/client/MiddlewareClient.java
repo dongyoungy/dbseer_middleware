@@ -70,6 +70,8 @@ public class MiddlewareClient extends Observable implements Runnable
 
 	private ArrayList<String> serverNameList = null;
 	private ZipOutputStream txZipOutputStream = null;
+	private PrintWriter txPrintWriter = null;
+	private File txLogFileRaw = null;
 
 	public MiddlewareClient(String host, String id, String password, int port, String logPath)
 	{
@@ -165,6 +167,23 @@ public class MiddlewareClient extends Observable implements Runnable
 		{
 			group.shutdownGracefully();
 			this.stopExecutors();
+			if (txLogFileRaw.exists())
+			{
+				txLogFileRaw.delete();
+			}
+			if (txZipOutputStream != null)
+			{
+				try
+				{
+					txZipOutputStream.closeEntry();
+					txZipOutputStream.close();
+				}
+				catch (IOException e)
+				{
+					e.printStackTrace();
+				}
+				txZipOutputStream = null;
+			}
 		}
 	}
 
@@ -224,9 +243,25 @@ public class MiddlewareClient extends Observable implements Runnable
 		}
 		Log.debug("Stop monitoring packet sent.");
 
+		if (txLogFileRaw != null && txLogFileRaw.exists())
+		{
+			txLogFileRaw.delete();
+		}
+		if (txZipOutputStream != null)
+		{
+			txZipOutputStream.closeEntry();
+			txZipOutputStream.close();
+			txZipOutputStream = null;
+		}
+
 		// reset retry count.
 		retry = 0;
 		isMonitoring = false;
+	}
+
+	public File getTxLogFileRaw()
+	{
+		return txLogFileRaw;
 	}
 
 	public void requestServerList() throws Exception
@@ -256,7 +291,8 @@ public class MiddlewareClient extends Observable implements Runnable
 		requesterExecutor.submit(txLogRequester);
 
 		File dbLogFile = new File(logPath + File.separator + MiddlewareConstants.TX_LOG_ZIP);
-//		PrintWriter writer = new PrintWriter(new FileWriter(dbLogFile, false));
+		txLogFileRaw = new File(logPath + File.separator + MiddlewareConstants.TX_LOG_RAW);
+		txPrintWriter = new PrintWriter(new FileWriter(txLogFileRaw, false));
 		FileOutputStream fos = new FileOutputStream(dbLogFile);
 		txZipOutputStream = new ZipOutputStream(new BufferedOutputStream(fos));
 
@@ -273,6 +309,11 @@ public class MiddlewareClient extends Observable implements Runnable
 		Log.debug("Tx Log requester launched.");
 
 		return txZipOutputStream;
+	}
+
+	public PrintWriter getTxPrintWriter()
+	{
+		return txPrintWriter;
 	}
 
 	public Map<String, PrintWriter> startSysLogRequester(String serverStr) throws Exception

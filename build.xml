@@ -204,7 +204,7 @@
 		<property name="src" value="src" />
 		<property name="bin" value="bin" />
 		<property name="lib" value="lib" />
-		<property name="middleware_version" value="0.1" />
+		<property name="middleware_version" value="0.2" />
   </target>
 
 	<target name="clean" depends="init">
