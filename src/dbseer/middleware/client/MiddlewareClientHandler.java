@@ -24,6 +24,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 
 import java.io.PrintWriter;
 import java.util.Map;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Created by Dong Young Yoon on 12/2/15.
@@ -32,7 +33,8 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 {
 	private MiddlewareClient client;
 	private Map<String,PrintWriter> sysWriter;
-	private PrintWriter dbWriter;
+//	private PrintWriter dbWriter;
+	private ZipOutputStream dbWriter;
 
 	public MiddlewareClientHandler(MiddlewareClient client)
 	{
@@ -95,7 +97,7 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 		{
 			Log.debug("received db log.");
 			// write db log.
-			dbWriter.write(packet.body);
+			dbWriter.write(packet.body.getBytes());
 			dbWriter.flush();
 			client.getTxLogRequester().logReceived();
 		}

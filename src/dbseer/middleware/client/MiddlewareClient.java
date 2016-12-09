@@ -34,12 +34,12 @@ import io.netty.handler.codec.compression.ZlibCodecFactory;
 import io.netty.handler.codec.compression.ZlibWrapper;
 import io.netty.handler.timeout.IdleStateHandler;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Created by Dong Young Yoon on 12/1/15.
@@ -69,6 +69,7 @@ public class MiddlewareClient extends Observable implements Runnable
 	private Map<String, MiddlewareClientLogRequester> sysLogRequester = null;
 
 	private ArrayList<String> serverNameList = null;
+	private ZipOutputStream txZipOutputStream = null;
 
 	public MiddlewareClient(String host, String id, String password, int port, String logPath)
 	{
@@ -100,6 +101,10 @@ public class MiddlewareClient extends Observable implements Runnable
 
 		try
 		{
+			// attach shutdown hook.
+			MiddlewareClientShutdown shutdownThread = new MiddlewareClientShutdown(this);
+			Runtime.getRuntime().addShutdownHook(shutdownThread);
+
 			File logDir = new File(logPath);
 			if (!logDir.exists())
 			{
@@ -239,7 +244,7 @@ public class MiddlewareClient extends Observable implements Runnable
 		Log.debug("Server list request packet sent.");
 	}
 
-	public PrintWriter startTxLogRequester() throws Exception
+	public ZipOutputStream startTxLogRequester() throws Exception
 	{
 		if (requesterExecutor == null)
 		{
@@ -250,12 +255,24 @@ public class MiddlewareClient extends Observable implements Runnable
 
 		requesterExecutor.submit(txLogRequester);
 
-		File dbLogFile = new File(logPath + File.separator + MiddlewareConstants.TX_LOG_PREFIX);
-		PrintWriter writer = new PrintWriter(new FileWriter(dbLogFile, false));
+		File dbLogFile = new File(logPath + File.separator + MiddlewareConstants.TX_LOG_ZIP);
+//		PrintWriter writer = new PrintWriter(new FileWriter(dbLogFile, false));
+		FileOutputStream fos = new FileOutputStream(dbLogFile);
+		txZipOutputStream = new ZipOutputStream(new BufferedOutputStream(fos));
+
+		try
+		{
+			txZipOutputStream.putNextEntry(new ZipEntry(MiddlewareConstants.TX_LOG_RAW));
+		}
+		catch (Exception e)
+		{
+			Log.error(e.getMessage());
+			e.printStackTrace();
+		}
 
 		Log.debug("Tx Log requester launched.");
 
-		return writer;
+		return txZipOutputStream;
 	}
 
 	public Map<String, PrintWriter> startSysLogRequester(String serverStr) throws Exception
@@ -309,6 +326,11 @@ public class MiddlewareClient extends Observable implements Runnable
 
 		// clear server names.
 		this.serverNameList.clear();
+	}
+
+	public ZipOutputStream getTxZipOutputStream()
+	{
+		return txZipOutputStream;
 	}
 
 	public void setMonitoring(boolean monitoring)
