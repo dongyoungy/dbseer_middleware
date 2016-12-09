@@ -22,6 +22,7 @@ import dbseer.middleware.data.Server;
 import dbseer.middleware.log.LogTailer;
 import dbseer.middleware.log.LogTailerListener;
 import dbseer.middleware.packet.MiddlewarePacketDecoder;
+import dbseer.middleware.packet.MiddlewarePacketEncoder;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
@@ -155,7 +156,12 @@ public class MiddlewareServer
 						{
 							ChannelPipeline p = ch.pipeline();
 							p.addLast(new IdleStateHandler(10, 0, 0));
-							p.addLast(new MiddlewarePacketDecoder(), new MiddlewareServerHandler(server));
+							p.addLast(ZlibCodecFactory.newZlibEncoder(ZlibWrapper.ZLIB));
+							p.addLast(ZlibCodecFactory.newZlibDecoder(ZlibWrapper.ZLIB));
+							p.addLast(new MiddlewarePacketDecoder());
+							p.addLast(new MiddlewarePacketEncoder());
+							p.addLast(new MiddlewareServerHandler(server));
+//							p.addLast(new MiddlewarePacketDecoder(), new MiddlewareServerHandler(server));
 						}
 					});
 

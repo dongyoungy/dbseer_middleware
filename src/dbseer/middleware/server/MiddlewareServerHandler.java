@@ -79,10 +79,12 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 
 		if (server.getConnectedChannelGroup().size() > 0 && !server.getConnectedChannelGroup().contains(ctx.channel()))
 		{
-			ByteBuf ans = Unpooled.buffer();
-			ans.writeInt(MiddlewareConstants.PACKET_CONNECTION_DENIED);
-			ans.writeInt(0);
-			ctx.writeAndFlush(ans);
+//			ByteBuf ans = Unpooled.buffer();
+//			ans.writeInt(MiddlewareConstants.PACKET_CONNECTION_DENIED);
+//			ans.writeInt(0);
+//			ctx.writeAndFlush(ans);
+			MiddlewarePacket sendPacket = new MiddlewarePacket(MiddlewareConstants.PACKET_CONNECTION_DENIED);
+			ctx.writeAndFlush(sendPacket);
 			return;
 		}
 
@@ -101,12 +103,13 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			String receivedId = tokens[0];
 			String receivedPassword = tokens[1];
 
-			ByteBuf ans = Unpooled.buffer();
+//			ByteBuf ans = Unpooled.buffer();
+			MiddlewarePacket sendPacket;
 
 			if (!receivedId.equals(server.getId()) || !receivedPassword.equals(server.getPassword()))
 			{
 				Log.debug("start monitoring failure: authentication failed.");
-				ans.writeInt(MiddlewareConstants.PACKET_AUTHENTICATION_FAILURE);
+//				ans.writeInt(MiddlewareConstants.PACKET_AUTHENTICATION_FAILURE);
 				String reason = "Authentication failed: ";
 				if (!receivedId.equals(server.getId()))
 				{
@@ -116,8 +119,9 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 				{
 					reason += "Incorrect password.";
 				}
-				ans.writeInt(reason.getBytes("UTF-8").length);
-				ans.writeBytes(reason.getBytes("UTF-8"));
+//				ans.writeInt(reason.getBytes("UTF-8").length);
+//				ans.writeBytes(reason.getBytes("UTF-8"));
+				sendPacket = new MiddlewarePacket(MiddlewareConstants.PACKET_AUTHENTICATION_FAILURE, reason);
 			}
 			else
 			{
@@ -129,24 +133,29 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 				if (isStarted)
 				{
 					Log.debug("start monitoring success");
-					ans.writeInt(MiddlewareConstants.PACKET_START_MONITORING_SUCCESS);
-					ans.writeInt(0);
+//					ans.writeInt(MiddlewareConstants.PACKET_START_MONITORING_SUCCESS);
+//					ans.writeInt(0);
+					sendPacket = new MiddlewarePacket(MiddlewareConstants.PACKET_START_MONITORING_SUCCESS);
 				}
 				else
 				{
 					Log.debug("start monitoring failure");
-					ans.writeInt(MiddlewareConstants.PACKET_START_MONITORING_FAILURE);
-					ans.writeInt(0);
+//					ans.writeInt(MiddlewareConstants.PACKET_START_MONITORING_FAILURE);
+//					ans.writeInt(0);
+					sendPacket = new MiddlewarePacket(MiddlewareConstants.PACKET_START_MONITORING_FAILURE);
 				}
 			}
-			ctx.writeAndFlush(ans);
+//			ctx.writeAndFlush(ans);
+			ctx.writeAndFlush(sendPacket);
 		}
 		else if (header == MiddlewareConstants.PACKET_PING)
 		{
 			ByteBuf ans = Unpooled.buffer();
-			ans.writeInt(MiddlewareConstants.PACKET_PING);
-			ans.writeInt(0);
-			ctx.writeAndFlush(ans);
+//			ans.writeInt(MiddlewareConstants.PACKET_PING);
+//			ans.writeInt(0);
+//			ctx.writeAndFlush(ans);
+			MiddlewarePacket sendPacket = new MiddlewarePacket(MiddlewareConstants.PACKET_PING);
+			ctx.writeAndFlush(sendPacket);
 		}
 		else if (header == MiddlewareConstants.PACKET_STOP_MONITORING)
 		{
@@ -154,48 +163,58 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			// stop monitoring
 			server.stopMonitoring();
 
-			ByteBuf ans = Unpooled.buffer();
+//			ByteBuf ans = Unpooled.buffer();
+			MiddlewarePacket sendPacket;
 			// check monitoring
 			if (server.isMonitoring())
 			{
 				Log.debug("stop monitoring failure");
-				ans.writeInt(MiddlewareConstants.PACKET_STOP_MONITORING_FAILURE);
-				ans.writeInt(0);
+//				ans.writeInt(MiddlewareConstants.PACKET_STOP_MONITORING_FAILURE);
+//				ans.writeInt(0);
+				sendPacket = new MiddlewarePacket(MiddlewareConstants.PACKET_STOP_MONITORING_FAILURE);
 			}
 			else
 			{
 				Log.debug("stop monitoring success");
-				ans.writeInt(MiddlewareConstants.PACKET_STOP_MONITORING_SUCCESS);
-				ans.writeInt(0);
+//				ans.writeInt(MiddlewareConstants.PACKET_STOP_MONITORING_SUCCESS);
+//				ans.writeInt(0);
+				sendPacket = new MiddlewarePacket(MiddlewareConstants.PACKET_STOP_MONITORING_SUCCESS);
 			}
-			ctx.writeAndFlush(ans);
+//			ctx.writeAndFlush(ans);
+			ctx.writeAndFlush(sendPacket);
 		}
 		else if (header == MiddlewareConstants.PACKET_CHECK_VERSION)
 		{
 			String clientVersion = packet.body;
-			ByteBuf ans = Unpooled.buffer();
+			MiddlewarePacket sendPacket;
+//			ByteBuf ans = Unpooled.buffer();
 			if (clientVersion.equalsIgnoreCase(MiddlewareConstants.PROTOCOL_VERSION))
 			{
-				ans.writeInt(MiddlewareConstants.PACKET_CHECK_VERSION_SUCCESS);
-				ans.writeInt(0);
+//				ans.writeInt(MiddlewareConstants.PACKET_CHECK_VERSION_SUCCESS);
+//				ans.writeInt(0);
+				sendPacket = new MiddlewarePacket(MiddlewareConstants.PACKET_CHECK_VERSION_SUCCESS);
 			}
 			else
 			{
-				ans.writeInt(MiddlewareConstants.PACKET_CHECK_VERSION_FAILURE);
-				ans.writeInt(MiddlewareConstants.PROTOCOL_VERSION.getBytes("UTF-8").length);
-				ans.writeBytes(MiddlewareConstants.PROTOCOL_VERSION.getBytes("UTF-8"));
+//				ans.writeInt(MiddlewareConstants.PACKET_CHECK_VERSION_FAILURE);
+//				ans.writeInt(MiddlewareConstants.PROTOCOL_VERSION.getBytes("UTF-8").length);
+//				ans.writeBytes(MiddlewareConstants.PROTOCOL_VERSION.getBytes("UTF-8"));
+				sendPacket = new MiddlewarePacket(MiddlewareConstants.PACKET_CHECK_VERSION_FAILURE, MiddlewareConstants.PROTOCOL_VERSION);
 			}
-			ctx.writeAndFlush(ans);
+//			ctx.writeAndFlush(ans);
+			ctx.writeAndFlush(sendPacket);
 			Log.debug("check version sent");
 		}
 		else if (header == MiddlewareConstants.PACKET_REQUEST_SERVER_LIST)
 		{
 			String serverList = server.getServerList();
-			ByteBuf ans = Unpooled.buffer();
-			ans.writeInt(MiddlewareConstants.PACKET_SERVER_LIST);
-			ans.writeInt(serverList.getBytes("UTF-8").length);
-			ans.writeBytes(serverList.getBytes("UTF-8"));
-			ctx.writeAndFlush(ans);
+//			ByteBuf ans = Unpooled.buffer();
+//			ans.writeInt(MiddlewareConstants.PACKET_SERVER_LIST);
+//			ans.writeInt(serverList.getBytes("UTF-8").length);
+//			ans.writeBytes(serverList.getBytes("UTF-8"));
+//			ctx.writeAndFlush(ans);
+			MiddlewarePacket sendPacket = new MiddlewarePacket(MiddlewareConstants.PACKET_SERVER_LIST, serverList);
+			ctx.writeAndFlush(sendPacket);
 			Log.debug("server list sent");
 		}
 		else if (header == MiddlewareConstants.PACKET_REQUEST_TX_LOG)
@@ -208,11 +227,14 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 //				log += aLog;
 //			}
 			String log = server.getDbLogListener().getString();
-			ByteBuf ans = Unpooled.buffer(8 + log.getBytes("UTF-8").length);
-			ans.writeInt(MiddlewareConstants.PACKET_TX_LOG);
-			ans.writeInt(log.getBytes("UTF-8").length);
-			ans.writeBytes(log.getBytes("UTF-8"));
-			ctx.writeAndFlush(ans);
+//			ByteBuf ans = Unpooled.buffer(8 + log.getBytes("UTF-8").length);
+//			ans.writeInt(MiddlewareConstants.PACKET_TX_LOG);
+//			ans.writeInt(log.getBytes("UTF-8").length);
+//			ans.writeBytes(log.getBytes("UTF-8"));
+//			ctx.writeAndFlush(ans);
+
+			MiddlewarePacket sendPacket = new MiddlewarePacket(MiddlewareConstants.PACKET_TX_LOG, log);
+			ctx.writeAndFlush(sendPacket);
 			Log.debug("db log sent");
 		}
 		else if (header == MiddlewareConstants.PACKET_REQUEST_SYS_LOG)
@@ -226,11 +248,14 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 //				log += aLog;
 //			}
 			log += server.getServer(serverStr).getLogTailerListener().getString();
-			ByteBuf ans = Unpooled.buffer(8 + log.getBytes("UTF-8").length);
-			ans.writeInt(MiddlewareConstants.PACKET_SYS_LOG);
-			ans.writeInt(log.getBytes("UTF-8").length);
-			ans.writeBytes(log.getBytes("UTF-8"));
-			ctx.writeAndFlush(ans);
+//			ByteBuf ans = Unpooled.buffer(8 + log.getBytes("UTF-8").length);
+//			ans.writeInt(MiddlewareConstants.PACKET_SYS_LOG);
+//			ans.writeInt(log.getBytes("UTF-8").length);
+//			ans.writeBytes(log.getBytes("UTF-8"));
+//			ctx.writeAndFlush(ans);
+
+			MiddlewarePacket sendPacket = new MiddlewarePacket(MiddlewareConstants.PACKET_SYS_LOG, log);
+			ctx.writeAndFlush(sendPacket);
 			Log.debug("sys log sent");
 		}
 		else

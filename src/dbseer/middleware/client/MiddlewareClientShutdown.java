@@ -14,43 +14,40 @@
  * limitations under the License.
  */
 
-package dbseer.middleware.packet;
+package dbseer.middleware.client;
 
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
+import java.util.zip.ZipOutputStream;
 
 /**
- * Created by Dong Young Yoon on 12/2/15.
+ * Created by Dong Young Yoon on 12/8/16.
  */
-public class MiddlewarePacket
+public class MiddlewareClientShutdown extends Thread
 {
-	public int header;
-	public int length;
-	public String body;
+	private MiddlewareClient client;
 
-	public MiddlewarePacket(int header, int length, String body)
+	public MiddlewareClientShutdown(MiddlewareClient client)
 	{
-		this.header = header;
-		this.length = length;
-		this.body = body;
+		this.client = client;
 	}
 
-	public MiddlewarePacket(int header, String body)
+	@Override
+	public void run()
 	{
-		this.header = header;
-		this.body = body;
+		ZipOutputStream zos = client.getTxZipOutputStream();
+
 		try
 		{
-			this.length = body.getBytes("UTF-8").length;
+			// close zip file.
+			if (zos != null)
+			{
+				zos.closeEntry();
+				zos.close();
+			}
 		}
-		catch (UnsupportedEncodingException e)
+		catch (IOException e)
 		{
 			e.printStackTrace();
 		}
-	}
-
-	public MiddlewarePacket(int header)
-	{
-		this.header = header;
-		this.length = 0;
 	}
 }

@@ -25,7 +25,8 @@ public class MiddlewareConstants
 	public static final String PROTOCOL_VERSION = "v0.2";
 
 	public static final String SERVER_STRING_DELIMITER = ",";
-	public static final String TX_LOG_PREFIX = "tx.log";
+	public static final String TX_LOG_RAW = "tx.log";
+	public static final String TX_LOG_ZIP = "tx.zip";
 	public static final String SYS_LOG_PREFIX = "sys.log";
 
 	public static final int PACKET_PING = 0;

@@ -19,7 +19,9 @@ package dbseer.middleware.client;
 import com.esotericsoftware.minlog.Log;
 import dbseer.middleware.constant.MiddlewareConstants;
 import dbseer.middleware.event.MiddlewareClientEvent;
+import dbseer.middleware.packet.MiddlewarePacket;
 import dbseer.middleware.packet.MiddlewarePacketDecoder;
+import dbseer.middleware.packet.MiddlewarePacketEncoder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -32,12 +34,12 @@ import io.netty.handler.codec.compression.ZlibCodecFactory;
 import io.netty.handler.codec.compression.ZlibWrapper;
 import io.netty.handler.timeout.IdleStateHandler;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Created by Dong Young Yoon on 12/1/15.
@@ -67,6 +69,7 @@ public class MiddlewareClient extends Observable implements Runnable
 	private Map<String, MiddlewareClientLogRequester> sysLogRequester = null;
 
 	private ArrayList<String> serverNameList = null;
+	private ZipOutputStream txZipOutputStream = null;
 
 	public MiddlewareClient(String host, String id, String password, int port, String logPath)
 	{
@@ -98,6 +101,10 @@ public class MiddlewareClient extends Observable implements Runnable
 
 		try
 		{
+			// attach shutdown hook.
+			MiddlewareClientShutdown shutdownThread = new MiddlewareClientShutdown(this);
+			Runtime.getRuntime().addShutdownHook(shutdownThread);
+
 			File logDir = new File(logPath);
 			if (!logDir.exists())
 			{
@@ -118,7 +125,11 @@ public class MiddlewareClient extends Observable implements Runnable
 						{
 							ChannelPipeline p = ch.pipeline();
 							p.addLast(new IdleStateHandler(10, 0, 0));
-							p.addLast(new MiddlewarePacketDecoder(),new MiddlewareClientHandler(client));
+							p.addLast(ZlibCodecFactory.newZlibEncoder(ZlibWrapper.ZLIB));
+							p.addLast(ZlibCodecFactory.newZlibDecoder(ZlibWrapper.ZLIB));
+							p.addLast(new MiddlewarePacketDecoder());
+							p.addLast(new MiddlewarePacketEncoder());
+							p.addLast(new MiddlewareClientHandler(client));
 						}
 					});
 
@@ -126,11 +137,13 @@ public class MiddlewareClient extends Observable implements Runnable
 			channel = f.channel();
 			Log.debug("Connected to the middleware.");
 
-			ByteBuf buf = Unpooled.buffer();
-			buf.writeInt(MiddlewareConstants.PACKET_CHECK_VERSION);
-			buf.writeInt(MiddlewareConstants.PROTOCOL_VERSION.getBytes("UTF-8").length);
-			buf.writeBytes(MiddlewareConstants.PROTOCOL_VERSION.getBytes("UTF-8"));
-			channel.writeAndFlush(buf);
+			MiddlewarePacket checkPacket = new MiddlewarePacket(MiddlewareConstants.PACKET_CHECK_VERSION, MiddlewareConstants.PROTOCOL_VERSION);
+//			ByteBuf buf = Unpooled.buffer();
+//			buf.writeInt(MiddlewareConstants.PACKET_CHECK_VERSION);
+//			buf.writeInt(MiddlewareConstants.PROTOCOL_VERSION.getBytes("UTF-8").length);
+//			buf.writeBytes(MiddlewareConstants.PROTOCOL_VERSION.getBytes("UTF-8"));
+//			channel.writeAndFlush(buf);
+			channel.writeAndFlush(checkPacket);
 
 			channel.closeFuture().sync();
 		}
@@ -183,11 +196,14 @@ public class MiddlewareClient extends Observable implements Runnable
 		if (channel != null)
 		{
 			String idPassword = this.id + "@" + this.password;
-			ByteBuf b = Unpooled.buffer();
-			b.writeInt(MiddlewareConstants.PACKET_START_MONITORING);
-			b.writeInt(idPassword.getBytes("UTF-8").length);
-			b.writeBytes(idPassword.getBytes("UTF-8"));
-			channel.writeAndFlush(b);
+//			ByteBuf b = Unpooled.buffer();
+//			b.writeInt(MiddlewareConstants.PACKET_START_MONITORING);
+//			b.writeInt(idPassword.getBytes("UTF-8").length);
+//			b.writeBytes(idPassword.getBytes("UTF-8"));
+//			channel.writeAndFlush(b);
+
+			MiddlewarePacket packet = new MiddlewarePacket(MiddlewareConstants.PACKET_START_MONITORING, idPassword);
+			channel.writeAndFlush(packet);
 		}
 		Log.debug("Start monitoring packet sent.");
 		retry++;
@@ -198,10 +214,13 @@ public class MiddlewareClient extends Observable implements Runnable
 		this.stopExecutors();
 		if (channel != null)
 		{
-			ByteBuf b = Unpooled.buffer();
-			b.writeInt(MiddlewareConstants.PACKET_STOP_MONITORING);
-			b.writeInt(0);
-			channel.writeAndFlush(b);
+//			ByteBuf b = Unpooled.buffer();
+//			b.writeInt(MiddlewareConstants.PACKET_STOP_MONITORING);
+//			b.writeInt(0);
+//			channel.writeAndFlush(b);
+
+			MiddlewarePacket packet = new MiddlewarePacket(MiddlewareConstants.PACKET_STOP_MONITORING);
+			channel.writeAndFlush(packet);
 		}
 		Log.debug("Stop monitoring packet sent.");
 
@@ -214,15 +233,18 @@ public class MiddlewareClient extends Observable implements Runnable
 	{
 		if (channel != null)
 		{
-			ByteBuf b= Unpooled.buffer();
-			b.writeInt(MiddlewareConstants.PACKET_REQUEST_SERVER_LIST);
-			b.writeInt(0);
-			channel.writeAndFlush(b);
+//			ByteBuf b= Unpooled.buffer();
+//			b.writeInt(MiddlewareConstants.PACKET_REQUEST_SERVER_LIST);
+//			b.writeInt(0);
+//			channel.writeAndFlush(b);
+
+			MiddlewarePacket packet = new MiddlewarePacket(MiddlewareConstants.PACKET_REQUEST_SERVER_LIST);
+			channel.writeAndFlush(packet);
 		}
 		Log.debug("Server list request packet sent.");
 	}
 
-	public PrintWriter startTxLogRequester() throws Exception
+	public ZipOutputStream startTxLogRequester() throws Exception
 	{
 		if (requesterExecutor == null)
 		{
@@ -233,12 +255,24 @@ public class MiddlewareClient extends Observable implements Runnable
 
 		requesterExecutor.submit(txLogRequester);
 
-		File dbLogFile = new File(logPath + File.separator + MiddlewareConstants.TX_LOG_PREFIX);
-		PrintWriter writer = new PrintWriter(new FileWriter(dbLogFile, false));
+		File dbLogFile = new File(logPath + File.separator + MiddlewareConstants.TX_LOG_ZIP);
+//		PrintWriter writer = new PrintWriter(new FileWriter(dbLogFile, false));
+		FileOutputStream fos = new FileOutputStream(dbLogFile);
+		txZipOutputStream = new ZipOutputStream(new BufferedOutputStream(fos));
+
+		try
+		{
+			txZipOutputStream.putNextEntry(new ZipEntry(MiddlewareConstants.TX_LOG_RAW));
+		}
+		catch (Exception e)
+		{
+			Log.error(e.getMessage());
+			e.printStackTrace();
+		}
 
 		Log.debug("Tx Log requester launched.");
 
-		return writer;
+		return txZipOutputStream;
 	}
 
 	public Map<String, PrintWriter> startSysLogRequester(String serverStr) throws Exception
@@ -292,6 +326,11 @@ public class MiddlewareClient extends Observable implements Runnable
 
 		// clear server names.
 		this.serverNameList.clear();
+	}
+
+	public ZipOutputStream getTxZipOutputStream()
+	{
+		return txZipOutputStream;
 	}
 
 	public void setMonitoring(boolean monitoring)
