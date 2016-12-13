@@ -46,7 +46,7 @@ public class MiddlewareClientShutdown extends Thread
 				zos.closeEntry();
 				zos.close();
 			}
-			if (txLogFileRaw.exists())
+			if (txLogFileRaw != null && txLogFileRaw.exists())
 			{
 				txLogFileRaw.delete();
 			}
