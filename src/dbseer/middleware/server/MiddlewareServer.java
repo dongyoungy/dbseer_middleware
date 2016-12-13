@@ -172,7 +172,10 @@ public class MiddlewareServer
 			ChannelFuture cf = b.bind(port).sync();
 
 			// shutdown the server.
-			cf.channel().closeFuture().sync();
+			if (cf != null)
+			{
+				cf.channel().closeFuture().sync();
+			}
 		}
 		catch (Exception e)
 		{
@@ -182,7 +185,10 @@ public class MiddlewareServer
 		{
 			bossGroup.shutdownGracefully();
 			workerGroup.shutdownGracefully();
-			tailerExecutor.shutdown();
+			if (tailerExecutor != null && !tailerExecutor.isShutdown())
+			{
+				tailerExecutor.shutdown();
+			}
 		}
 	}
 
