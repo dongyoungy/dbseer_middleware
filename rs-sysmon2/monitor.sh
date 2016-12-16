@@ -6,7 +6,7 @@ echo $$ > ./monitor.pid
 
 rm $DSTAT_OUTPUT_PATH 2> /dev/null
 
-exec ./dstat --noupdate -T -l -f -c -m -n -d -r --aio -s -g --vm --fs  -i -y -p --disk-util --top-mysql-cpu --mysql5-all1 --mysql-ndb --client-events --output $DSTAT_OUTPUT_PATH
+exec ./dstat --noupdate -T -l -f -c -m -n -d -r --aio -s -g --vm --fs  -i -y -p --disk-util --top-mysql-cpu --mysql5-all1 -mysql5-log-size --mysql-ndb --client-events --output $DSTAT_OUTPUT_PATH
 
 #if [ ""$DSTAT_CONFIGURED != "true" ]
 #then
