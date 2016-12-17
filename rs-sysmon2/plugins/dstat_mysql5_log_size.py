@@ -21,8 +21,8 @@ class dstat_plugin(dstat):
 
     def __init__(self):
         self.name = 'mysql5 on ' + mysql_host +' ' + mysql_port
-       	self.nick = ("innodb_log_file_size", "innodb_log_buffer_size", "innodb_page_size")
-       	self.vars = ("innodb_log_file_size", "innodb_log_buffer_size", "innodb_page_size")
+       	self.nick = ("innodb_log_file_size", "innodb_log_buffer_size", "innodb_page_size", "innodb_buffer_pool_size")
+       	self.vars = ("innodb_log_file_size", "innodb_log_buffer_size", "innodb_page_size", "innodb_buffer_pool_size")
         
         
     def check(self): 
