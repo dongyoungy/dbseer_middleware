@@ -139,6 +139,17 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 			// set monitoring to false
 			client.setMonitoring(false);
 		}
+		else if (header == MiddlewareConstants.PACKET_TABLE_COUNT)
+		{
+			Log.debug("received table count");
+			String[] contents = packet.body.split(",",3);
+			String serverName = contents[0];
+			String tableName = contents[1];
+			long rowCount = Long.parseLong(contents[2]);
+
+			client.setTableRowCount(serverName, tableName, rowCount);
+
+		}
 		else if (header == MiddlewareConstants.PACKET_PING)
 		{
 			Log.debug("heartbeat received.");

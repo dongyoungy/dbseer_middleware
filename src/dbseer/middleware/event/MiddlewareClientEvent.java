@@ -26,11 +26,15 @@ public class MiddlewareClientEvent
 	public static final int IS_MONITORING = 1;
 	public static final int IS_NOT_MONITORING = 2;
 	public static final int ERROR = 3;
+	public static final int TABLE_ROW_COUNT = 4;
 
 	public int event;
+	public long count;
 	public Exception e;
 	public String error;
 	public String serverStr;
+	public String serverName;
+	public String tableName;
 
 	public MiddlewareClientEvent(int event)
 	{
@@ -41,6 +45,14 @@ public class MiddlewareClientEvent
 	{
 		this.event = event;
 		this.e = e;
+	}
+
+	public MiddlewareClientEvent(int event, String serverName, String tableName, long count)
+	{
+		this.event = event;
+		this.serverName = serverName;
+		this.tableName = tableName;
+		this.count = count;
 	}
 
 	public MiddlewareClientEvent(int event, String error)

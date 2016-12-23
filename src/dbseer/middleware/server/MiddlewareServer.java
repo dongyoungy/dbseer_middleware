@@ -304,6 +304,20 @@ public class MiddlewareServer
 		return serverStr;
 	}
 
+	public long getTableCount(String serverName, String tableName)
+	{
+		Server server = servers.get(serverName);
+
+		if (server == null)
+		{
+			return -1;
+		}
+		else
+		{
+			return server.getTableCount(tableName);
+		}
+	}
+
 	public static void main(String[] args)
 	{
 		// set up logger
@@ -468,7 +482,7 @@ public class MiddlewareServer
 
 	private static Server readServerConfig(String name, Ini.Section section, String logPath) throws Exception
 	{
-		String dbUser, dbPassword, dbHost, dbPort, sshUser, monitorDir, monitorScript;
+		String dbUser, dbPassword, dbName, dbHost, dbPort, sshUser, monitorDir, monitorScript;
 
 		dbHost = section.get("db_host");
 		if (dbHost == null)
@@ -483,6 +497,11 @@ public class MiddlewareServer
 		if (!StringUtils.isNumeric(dbPort))
 		{
 			throw new Exception("'db_port' must be a number.");
+		}
+		dbName = section.get("db_name");
+		if (dbName == null)
+		{
+			throw new Exception("'db_name' is missing in the configuration file.");
 		}
 		dbUser = section.get("db_user");
 		if (dbUser == null)
@@ -510,7 +529,7 @@ public class MiddlewareServer
 			throw new Exception("'monitor_script' is missing in the configuration file.");
 		}
 
-		return new Server(name, dbHost, dbPort, dbUser, dbPassword, sshUser, monitorDir, monitorScript, logPath);
+		return new Server(name, dbHost, dbPort, dbName, dbUser, dbPassword, sshUser, monitorDir, monitorScript, logPath);
 	}
 
 	public String getId()

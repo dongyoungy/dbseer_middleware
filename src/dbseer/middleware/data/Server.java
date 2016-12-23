@@ -22,9 +22,7 @@ import dbseer.middleware.log.LogTailer;
 import dbseer.middleware.log.LogTailerListener;
 
 import java.io.File;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -41,6 +39,7 @@ public class Server
 
 	String dbHost;
 	String dbPort;
+	String dbName;
 	String dbUser;
 	String dbPassword;
 
@@ -49,9 +48,12 @@ public class Server
 	String monitorDir;
 	String monitorScript;
 	String logPath;
+	String url;
 
 	Process monitorProcess;
 	File logFile;
+
+	Connection conn;
 
 //	private ArrayBlockingQueue<String> logQueue;
 	private LinkedBlockingQueue<String> logQueue;
@@ -59,18 +61,20 @@ public class Server
 	private LogTailer logTailer;
 	private ExecutorService tailerExecutor;
 
-	public Server(String name, String dbHost, String dbPort, String dbUser, String dbPassword, String sshUser, String monitorDir, String monitorScript, String logPath)
+	public Server(String name, String dbHost, String dbPort, String dbName, String dbUser, String dbPassword, String sshUser, String monitorDir, String monitorScript, String logPath)
 	{
 		this.name = name;
 		this.dbHost = dbHost;
 		this.dbPort = dbPort;
 		this.dbUser = dbUser;
+		this.dbName = dbName;
 		this.dbPassword = dbPassword;
 		this.sshUser = sshUser;
 		this.monitorDir = monitorDir;
 		this.monitorScript = monitorScript;
 		this.logPath = logPath;
 //		this.logQueue = new ArrayBlockingQueue<>(MiddlewareConstants.QUEUE_SIZE);
+		this.url = String.format("jdbc:mysql://%s:%s", dbHost, dbPort);
 		this.logQueue = new LinkedBlockingQueue<>();
 	}
 
@@ -79,6 +83,7 @@ public class Server
 		Log.info(String.format("[Server : %s]", name));
 		Log.info(String.format("DB Host = %s", dbHost));
 		Log.info(String.format("DB Port = %s", dbPort));
+		Log.info(String.format("DB Name = %s", dbName));
 		Log.info(String.format("DB User = %s", dbUser));
 		Log.info(String.format("DB PW = %s", dbPassword));
 		Log.info(String.format("SSH User = %s", sshUser));
@@ -88,15 +93,13 @@ public class Server
 
 	public boolean testConnection()
 	{
-		String url = String.format("jdbc:mysql://%s:%s", dbHost, dbPort);
 		boolean canConnect = false;
 		try
 		{
 			Class.forName("com.mysql.jdbc.Driver").newInstance();
-			Connection conn = (Connection) DriverManager.getConnection(url, dbUser, dbPassword);
+			conn = (Connection) DriverManager.getConnection(url, dbUser, dbPassword);
 
 			// connection was successful.
-			conn.close();
 			canConnect = true;
 		}
 		catch (IllegalAccessException e)
@@ -117,6 +120,34 @@ public class Server
 		}
 
 		return canConnect;
+	}
+
+	public long getTableCount(String tableName)
+	{
+		long count = -1;
+		try
+		{
+			if (conn == null || conn.isClosed())
+			{
+				if (!this.testConnection())
+				{
+					// cannot connect... return -1
+					return count;
+				}
+			}
+			String query = String.format("SELECT COUNT(*) as ROW_COUNT from %s.%s;", dbName, tableName);
+			Statement stmt = conn.createStatement();
+			ResultSet rs = stmt.executeQuery(query);
+			if (rs.next())
+			{
+				count = rs.getLong("ROW_COUNT");
+			}
+		}
+		catch (SQLException e)
+		{
+			Log.debug("Caught a SQLException while getting row counts for the table " + tableName);
+		}
+		return count;
 	}
 
     public boolean testMonitoringDir()
@@ -199,6 +230,16 @@ public class Server
 		{
 			tailerExecutor.shutdownNow();
 		}
+	}
+
+	public String getDbName()
+	{
+		return dbName;
+	}
+
+	public void setDbName(String dbName)
+	{
+		this.dbName = dbName;
 	}
 
 	public String getName()

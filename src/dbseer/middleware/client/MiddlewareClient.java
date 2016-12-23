@@ -279,6 +279,16 @@ public class MiddlewareClient extends Observable implements Runnable
 		Log.debug("Server list request packet sent.");
 	}
 
+	public void requestTableCount(String serverName, String tableName)
+	{
+		if (channel != null)
+		{
+			MiddlewarePacket packet = new MiddlewarePacket(MiddlewareConstants.PACKET_REQUEST_TABLE_COUNT, String.format("%s,%s", serverName, tableName));
+			channel.writeAndFlush(packet);
+		}
+		Log.debug("Table count request packet sent.");
+	}
+
 	public ZipOutputStream startTxLogRequester() throws Exception
 	{
 		if (requesterExecutor == null)
@@ -404,6 +414,12 @@ public class MiddlewareClient extends Observable implements Runnable
 			event = new MiddlewareClientEvent(MiddlewareClientEvent.IS_NOT_MONITORING);
 		}
 		event.serverStr = serverStr;
+		notifyObservers(event);
+	}
+
+	public void setTableRowCount(String serverName, String tableName, long rowCount)
+	{
+		MiddlewareClientEvent event = new MiddlewareClientEvent(MiddlewareClientEvent.TABLE_ROW_COUNT, serverName, tableName, rowCount);
 		notifyObservers(event);
 	}
 

@@ -258,6 +258,21 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			ctx.writeAndFlush(sendPacket);
 			Log.debug("sys log sent");
 		}
+		else if (header == MiddlewareConstants.PACKET_REQUEST_TABLE_COUNT)
+		{
+			String body = packet.body;
+			String[] contents  = body.split(",");
+			String serverName = contents[0];
+			String tableName = contents[1];
+
+			long tableCount = server.getTableCount(serverName, tableName);
+
+			String newMessage = String.format("%s,%s,%ld", serverName, tableName, tableCount);
+
+			MiddlewarePacket sendPacket = new MiddlewarePacket(MiddlewareConstants.PACKET_TABLE_COUNT, newMessage);
+			ctx.writeAndFlush(sendPacket);
+			Log.debug("table count sent for " + tableName);
+		}
 		else
 		{
 			Log.error("Unknown packet received: " + packet.header);

@@ -50,4 +50,7 @@ public class MiddlewareConstants
 
 	public static final int PACKET_REQUEST_SERVER_LIST = 500;
 	public static final int PACKET_SERVER_LIST = 501;
+
+	public static final int PACKET_REQUEST_TABLE_COUNT = 600;
+	public static final int PACKET_TABLE_COUNT = 601;
 }
