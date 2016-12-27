@@ -268,6 +268,7 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			long tableCount = server.getTableCount(serverName, tableName);
 
 			String newMessage = String.format("%s,%s,%d", serverName, tableName, tableCount);
+            Log.info(newMessage);
 
 			MiddlewarePacket sendPacket = new MiddlewarePacket(MiddlewareConstants.PACKET_TABLE_COUNT, newMessage);
 			ctx.writeAndFlush(sendPacket);

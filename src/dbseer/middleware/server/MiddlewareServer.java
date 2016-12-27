@@ -310,6 +310,7 @@ public class MiddlewareServer
 
 		if (server == null)
 		{
+			Log.info("server null");
 			return -1;
 		}
 		else

@@ -22,6 +22,7 @@ import dbseer.middleware.log.LogTailer;
 import dbseer.middleware.log.LogTailerListener;
 
 import java.io.File;
+import java.util.*;
 import java.sql.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -61,6 +62,8 @@ public class Server
 	private LogTailer logTailer;
 	private ExecutorService tailerExecutor;
 
+	List<String> tableList;
+
 	public Server(String name, String dbHost, String dbPort, String dbName, String dbUser, String dbPassword, String sshUser, String monitorDir, String monitorScript, String logPath)
 	{
 		this.name = name;
@@ -74,8 +77,9 @@ public class Server
 		this.monitorScript = monitorScript;
 		this.logPath = logPath;
 //		this.logQueue = new ArrayBlockingQueue<>(MiddlewareConstants.QUEUE_SIZE);
-		this.url = String.format("jdbc:mysql://%s:%s", dbHost, dbPort);
+		this.url = String.format("jdbc:mysql://%s:%s/%s", dbHost, dbPort, dbName);
 		this.logQueue = new LinkedBlockingQueue<>();
+		this.tableList = new ArrayList<>();
 	}
 
 	public void printLogInfo()
@@ -119,7 +123,50 @@ public class Server
 			Log.debug("Caught a SQLException while testing connection to the server.");
 		}
 
+		if (canConnect)
+		{
+			if (this.getTableList())
+			{
+				for (String table : tableList)
+				{
+					this.getTableCount(table);
+				}
+			}
+		}
+
 		return canConnect;
+	}
+
+	private boolean getTableList()
+	{
+		Log.info("Getting table list");
+		tableList.clear();
+		try
+		{
+			if (conn == null || conn.isClosed())
+			{
+				if (!this.testConnection())
+				{
+					// cannot connect... return -1
+					Log.error("No DB Connection.");
+					return false;
+				}
+			}
+			String query = String.format("SHOW TABLES IN %s;", dbName);
+			PreparedStatement stmt = conn.prepareStatement(query);
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next())
+			{
+				String tableName = rs.getString(1);
+				tableList.add(tableName);
+			}
+		}
+		catch (SQLException e)
+		{
+			Log.debug("Caught a SQLException while getting table names for the database " + dbName);
+			return false;
+		}
+		return true;
 	}
 
 	public long getTableCount(String tableName)
@@ -132,15 +179,20 @@ public class Server
 				if (!this.testConnection())
 				{
 					// cannot connect... return -1
+					Log.error("No DB Connection.");
 					return count;
 				}
 			}
-			String query = String.format("SELECT COUNT(*) as ROW_COUNT from %s.%s;", dbName, tableName);
+			String query = String.format("SELECT COUNT(*) as ROW_COUNT from %s;", tableName);
 			Statement stmt = conn.createStatement();
 			ResultSet rs = stmt.executeQuery(query);
 			if (rs.next())
 			{
-				count = rs.getLong("ROW_COUNT");
+				count = rs.getInt(1);
+			}
+			else
+			{
+				Log.error("No result set");
 			}
 		}
 		catch (SQLException e)
