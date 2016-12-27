@@ -173,7 +173,7 @@ public class Server
 
 	public long getTableCount(String tableName)
 	{
-		Long count = tableCount.get(tableName);
+		Long count = tableCount.get(tableName.toLowerCase());
 		if (count == null)
 		{
 			return getTableCountFromDatabase(tableName);
@@ -214,7 +214,7 @@ public class Server
 		}
 		if (count != -1)
 		{
-			tableCount.put(tableName, count);
+			tableCount.put(tableName.toLowerCase(), count);
 		}
 		return count;
 	}
