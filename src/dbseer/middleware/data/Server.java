@@ -63,6 +63,7 @@ public class Server
 	private ExecutorService tailerExecutor;
 
 	List<String> tableList;
+	Map<String, Long> tableCount;
 
 	public Server(String name, String dbHost, String dbPort, String dbName, String dbUser, String dbPassword, String sshUser, String monitorDir, String monitorScript, String logPath)
 	{
@@ -80,6 +81,7 @@ public class Server
 		this.url = String.format("jdbc:mysql://%s:%s/%s", dbHost, dbPort, dbName);
 		this.logQueue = new LinkedBlockingQueue<>();
 		this.tableList = new ArrayList<>();
+		this.tableCount = new HashMap<>();
 	}
 
 	public void printLogInfo()
@@ -125,11 +127,12 @@ public class Server
 
 		if (canConnect)
 		{
+			Log.info("Getting DB statistics");
 			if (this.getTableList())
 			{
 				for (String table : tableList)
 				{
-					this.getTableCount(table);
+					this.getTableCountFromDatabase(table);
 				}
 			}
 		}
@@ -139,7 +142,6 @@ public class Server
 
 	private boolean getTableList()
 	{
-		Log.info("Getting table list");
 		tableList.clear();
 		try
 		{
@@ -171,6 +173,17 @@ public class Server
 
 	public long getTableCount(String tableName)
 	{
+		Long count = tableCount.get(tableName);
+		if (count == null)
+		{
+			return getTableCountFromDatabase(tableName);
+		}
+		else return count.longValue();
+
+	}
+
+	public long getTableCountFromDatabase(String tableName)
+	{
 		long count = -1;
 		try
 		{
@@ -198,6 +211,10 @@ public class Server
 		catch (SQLException e)
 		{
 			Log.debug("Caught a SQLException while getting row counts for the table " + tableName);
+		}
+		if (count != -1)
+		{
+			tableCount.put(tableName, count);
 		}
 		return count;
 	}

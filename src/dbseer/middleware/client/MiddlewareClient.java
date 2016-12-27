@@ -420,6 +420,7 @@ public class MiddlewareClient extends Observable implements Runnable
 	public void setTableRowCount(String serverName, String tableName, long rowCount)
 	{
 		MiddlewareClientEvent event = new MiddlewareClientEvent(MiddlewareClientEvent.TABLE_ROW_COUNT, serverName, tableName, rowCount);
+		setChanged();
 		notifyObservers(event);
 	}
 
