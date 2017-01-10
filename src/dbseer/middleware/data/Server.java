@@ -127,7 +127,7 @@ public class Server
 
 		if (canConnect)
 		{
-			Log.info(String.format("Getting DB statistics from database '%s'... This may take a few minutes.", dbName));
+			Log.info(String.format("Getting DB statistics from database '%s' @ '%s'... This may take a few minutes.", dbName, name));
 			if (this.getTableList())
 			{
 				for (String table : tableList)
@@ -158,13 +158,15 @@ public class Server
 					return false;
 				}
 			}
-			String query = String.format("SHOW TABLES IN %s;", dbName);
+			String query = String.format("SHOW TABLE STATUS IN %s;", dbName);
 			PreparedStatement stmt = conn.prepareStatement(query);
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next())
 			{
-				String tableName = rs.getString(1);
+				String tableName = rs.getString("Name");
+				Long rowCount = rs.getLong("Rows");
 				tableList.add(tableName);
+				tableCount.put(tableName.toLowerCase(), rowCount.longValue());
 			}
 		}
 		catch (SQLException e)
