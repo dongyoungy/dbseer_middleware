@@ -297,7 +297,7 @@ public class MiddlewareClient extends Observable implements Runnable
 
 		if (channel != null)
 		{
-			MiddlewarePacket packet = new MiddlewarePacket(MiddlewareConstants.PACKET_REQUEST_QUERY_STATISTICS, String.format("%s,%d,%s", serverName, reqId, txType, sql));
+			MiddlewarePacket packet = new MiddlewarePacket(MiddlewareConstants.PACKET_REQUEST_QUERY_STATISTICS, String.format("%s,%d,%d,%s", serverName, reqId, txType, sql));
 			channel.writeAndFlush(packet);
 		}
 		++reqId;

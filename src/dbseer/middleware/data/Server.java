@@ -132,7 +132,7 @@ public class Server
 			{
 				for (String table : tableList)
 				{
-					this.getTableCountFromDatabase(table);
+					this.getTableCount(table);
 				}
 			} else
 			{
