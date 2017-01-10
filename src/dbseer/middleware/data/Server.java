@@ -127,13 +127,17 @@ public class Server
 
 		if (canConnect)
 		{
-			Log.info("Getting DB statistics");
+			Log.info("Getting DB statistics... This may take a few minutes.");
 			if (this.getTableList())
 			{
 				for (String table : tableList)
 				{
 					this.getTableCountFromDatabase(table);
 				}
+			} else
+			{
+				Log.error(String.format("Cannot obtain the list of tables from database '%s'", dbName));
+				return false;
 			}
 		}
 
@@ -217,6 +221,38 @@ public class Server
 			tableCount.put(tableName.toLowerCase(), count);
 		}
 		return count;
+	}
+
+	public List<Integer> getNumRowAccessedByQuery(String sql)
+	{
+		ArrayList<Integer> results = new ArrayList<>();
+		int count = 0;
+		try
+		{
+			if (conn == null || conn.isClosed())
+			{
+				if (!this.testConnection())
+				{
+					// cannot connect... return -1
+					Log.error("No DB Connection.");
+					return null;
+				}
+			}
+			String query = String.format("EXPLAIN %s;", sql);
+			Statement stmt = conn.createStatement();
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next())
+			{
+				results.add(rs.getInt("rows"));
+//				count += rs.getInt("rows");
+			}
+		}
+		catch (SQLException e)
+		{
+			Log.debug("Caught a SQLException while getting the number of rows accessed for the query: " + sql);
+		}
+
+		return results;
 	}
 
     public boolean testMonitoringDir()

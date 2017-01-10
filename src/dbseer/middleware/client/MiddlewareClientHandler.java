@@ -150,6 +150,17 @@ public class MiddlewareClientHandler extends ChannelInboundHandlerAdapter
 			client.setTableRowCount(serverName, tableName, rowCount);
 
 		}
+		else if (header == MiddlewareConstants.PACKET_QUERY_STATISTICS)
+		{
+			Log.debug("received query statistics");
+			String[] contents = packet.body.split(",", 3);
+			String serverName = contents[0];
+			int txType = Integer.parseInt(contents[1]);
+			int reqId = Integer.parseInt(contents[2]);
+			String rowsAccessed = contents[3];
+
+			client.printQueryStatistics(serverName, txType, reqId, rowsAccessed);
+		}
 		else if (header == MiddlewareConstants.PACKET_PING)
 		{
 			Log.debug("heartbeat received.");

@@ -53,4 +53,10 @@ public class MiddlewareConstants
 
 	public static final int PACKET_REQUEST_TABLE_COUNT = 600;
 	public static final int PACKET_TABLE_COUNT = 601;
+
+	public static final int PACKET_REQUEST_NUM_ROW_BY_SQL = 700;
+	public static final int PACKET_NUM_ROW_BY_SQL = 701;
+
+	public static final int PACKET_REQUEST_QUERY_STATISTICS = 800;
+	public static final int PACKET_QUERY_STATISTICS = 801;
 }

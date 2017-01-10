@@ -55,6 +55,7 @@ public class MiddlewareClient extends Observable implements Runnable
 	private String host;
 	private int port;
 	private int retry;
+	private int reqId;
 	private boolean isMonitoring;
 
 	private String logPath;
@@ -67,6 +68,8 @@ public class MiddlewareClient extends Observable implements Runnable
 
 	private MiddlewareClientLogRequester txLogRequester = null;
 	private Map<String, MiddlewareClientLogRequester> sysLogRequester = null;
+	private Map<String, PrintWriter> logWriterMap = null; // tx log writer for dbseer: <transaction type, writer>
+	private Map<Integer, String> statementMessageMap = null;
 
 	private ArrayList<String> serverNameList = null;
 	private ZipOutputStream txZipOutputStream = null;
@@ -76,13 +79,16 @@ public class MiddlewareClient extends Observable implements Runnable
 	public MiddlewareClient(String host, String id, String password, int port, String logPath)
 	{
 		this.retry = 0;
+		this.reqId = 0;
 		this.id = id;
 		this.password = password;
 		this.host = host;
 		this.port = port;
 		this.logPath = logPath;
 		this.isMonitoring = false;
+		this.logWriterMap = new HashMap<>();
 		this.sysLogRequester = new HashMap<>();
+		this.statementMessageMap = new HashMap<>();
 		this.serverNameList = new ArrayList<>();
 	}
 
@@ -279,6 +285,25 @@ public class MiddlewareClient extends Observable implements Runnable
 		Log.debug("Server list request packet sent.");
 	}
 
+	public synchronized void requestStatistics(String serverName, int txId, int txType, int stId, long latency, int mode, Set<String> tables, String sql)
+	{
+		String msg = String.format("%d,%d,%d,%d,%d,%d,", txType, txId, stId, latency, mode, tables.size());
+		for (String table : tables)
+		{
+			msg += table + ",";
+		}
+
+		statementMessageMap.put(reqId, msg);
+
+		if (channel != null)
+		{
+			MiddlewarePacket packet = new MiddlewarePacket(MiddlewareConstants.PACKET_REQUEST_QUERY_STATISTICS, String.format("%s,%d,%s", serverName, reqId, txType, sql));
+			channel.writeAndFlush(packet);
+		}
+		++reqId;
+		Log.debug("Table count request packet sent.");
+	}
+
 	public void requestTableCount(String serverName, String tableName)
 	{
 		if (channel != null)
@@ -287,6 +312,26 @@ public class MiddlewareClient extends Observable implements Runnable
 			channel.writeAndFlush(packet);
 		}
 		Log.debug("Table count request packet sent.");
+	}
+
+	public void requestNumRowAccessedByQuery(String serverName, int txType, String sql)
+	{
+		if (channel != null)
+		{
+			MiddlewarePacket packet = new MiddlewarePacket(MiddlewareConstants.PACKET_REQUEST_NUM_ROW_BY_SQL, String.format("%s,%d,%s", serverName, txType, sql));
+			channel.writeAndFlush(packet);
+		}
+		Log.debug("Num row accessed by sql request packet sent.");
+	}
+
+	public synchronized void printQueryStatistics(String serverName, int txType, int reqId, String msg)
+	{
+		PrintWriter writer = logWriterMap.get(serverName + txType);
+		writer.print(statementMessageMap.get(reqId));
+		writer.println(msg);
+		writer.flush();
+
+		statementMessageMap.remove(reqId);
 	}
 
 	public ZipOutputStream startTxLogRequester() throws Exception
@@ -427,6 +472,11 @@ public class MiddlewareClient extends Observable implements Runnable
 	public boolean isMonitoring()
 	{
 		return isMonitoring;
+	}
+
+	public void registerLogWriter(String id, PrintWriter writer)
+	{
+		logWriterMap.put(id, writer);
 	}
 
 	public void disconnect() throws Exception

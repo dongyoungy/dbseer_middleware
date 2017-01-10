@@ -26,6 +26,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Dong Young Yoon on 12/1/15.
@@ -268,11 +269,36 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			long tableCount = server.getTableCount(serverName, tableName);
 
 			String newMessage = String.format("%s,%s,%d", serverName, tableName, tableCount);
-            Log.info(newMessage);
 
 			MiddlewarePacket sendPacket = new MiddlewarePacket(MiddlewareConstants.PACKET_TABLE_COUNT, newMessage);
 			ctx.writeAndFlush(sendPacket);
 			Log.debug("table count sent for " + tableName);
+		}
+		else if (header == MiddlewareConstants.PACKET_REQUEST_QUERY_STATISTICS)
+		{
+			String body = packet.body;
+			String[] contents = body.split(",", 3);
+			String serverName = contents[0];
+			int reqId = Integer.parseInt(contents[1]);
+			int txType = Integer.parseInt(contents[2]);
+			String sql = contents[3];
+
+			List<Integer> rowsAccessed = server.getNumRowAccessedByQuery(serverName, sql);
+
+			String newMessage = String.format("%s,%d,%d,", serverName,txType,reqId);
+			for (int i = 0; i < rowsAccessed.size(); ++i)
+			{
+				Integer num = rowsAccessed.get(i);
+				newMessage += num;
+				if (i != rowsAccessed.size()-1)
+				{
+					newMessage += ",";
+				}
+			}
+
+			MiddlewarePacket sendPacket = new MiddlewarePacket(MiddlewareConstants.PACKET_QUERY_STATISTICS, newMessage);
+			ctx.writeAndFlush(sendPacket);
+			Log.debug("query statistics for " + sql);
 		}
 		else
 		{
