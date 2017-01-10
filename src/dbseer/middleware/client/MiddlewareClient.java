@@ -327,9 +327,16 @@ public class MiddlewareClient extends Observable implements Runnable
 	public synchronized void printQueryStatistics(String serverName, int txType, int reqId, String msg)
 	{
 		PrintWriter writer = logWriterMap.get(serverName + txType);
-		writer.print(statementMessageMap.get(reqId));
-		writer.println(msg);
-		writer.flush();
+		if (writer != null)
+		{
+			writer.print(statementMessageMap.get(reqId));
+			writer.println(msg);
+			writer.flush();
+		}
+		else
+		{
+			Log.error("Writer null");
+		}
 
 		statementMessageMap.remove(reqId);
 	}
