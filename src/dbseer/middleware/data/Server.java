@@ -127,7 +127,7 @@ public class Server
 
 		if (canConnect)
 		{
-			Log.info("Getting DB statistics... This may take a few minutes.");
+			Log.info(String.format("Getting DB statistics from database '%s'... This may take a few minutes.", dbName));
 			if (this.getTableList())
 			{
 				for (String table : tableList)

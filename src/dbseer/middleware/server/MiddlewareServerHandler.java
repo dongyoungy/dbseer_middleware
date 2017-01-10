@@ -277,7 +277,7 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 		else if (header == MiddlewareConstants.PACKET_REQUEST_QUERY_STATISTICS)
 		{
 			String body = packet.body;
-			String[] contents = body.split(",", 3);
+			String[] contents = body.split(",", 4);
 			String serverName = contents[0];
 			int reqId = Integer.parseInt(contents[1]);
 			int txType = Integer.parseInt(contents[2]);
@@ -286,13 +286,16 @@ public class MiddlewareServerHandler extends ChannelInboundHandlerAdapter
 			List<Integer> rowsAccessed = server.getNumRowAccessedByQuery(serverName, sql);
 
 			String newMessage = String.format("%s,%d,%d,", serverName,txType,reqId);
-			for (int i = 0; i < rowsAccessed.size(); ++i)
+			if (rowsAccessed != null)
 			{
-				Integer num = rowsAccessed.get(i);
-				newMessage += num;
-				if (i != rowsAccessed.size()-1)
+				for (int i = 0; i < rowsAccessed.size(); ++i)
 				{
-					newMessage += ",";
+					Integer num = rowsAccessed.get(i);
+					newMessage += num;
+					if (i != rowsAccessed.size() - 1)
+					{
+						newMessage += ",";
+					}
 				}
 			}
 
