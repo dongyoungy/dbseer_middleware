@@ -217,6 +217,7 @@
 
 	<target name="compile" depends="prepare">
 		<javac srcdir="${src}" destdir="${bin}" >
+      <compilerarg line="${compiler.args.dbseer_middleware}"/>
       <bootclasspath refid="dbseer_middleware.module.bootclasspath"/>
       <classpath refid="dbseer_middleware.module.production.classpath"/>
 		</javac>
