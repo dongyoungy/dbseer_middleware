@@ -127,13 +127,17 @@ public class Server
 
 		if (canConnect)
 		{
-			Log.info("Getting DB statistics");
+			Log.info(String.format("Getting DB statistics from database '%s' @ '%s'... This may take a few minutes.", dbName, name));
 			if (this.getTableList())
 			{
 				for (String table : tableList)
 				{
-					this.getTableCountFromDatabase(table);
+					this.getTableCount(table);
 				}
+			} else
+			{
+				Log.error(String.format("Cannot obtain the list of tables from database '%s'", dbName));
+				return false;
 			}
 		}
 
@@ -154,13 +158,15 @@ public class Server
 					return false;
 				}
 			}
-			String query = String.format("SHOW TABLES IN %s;", dbName);
+			String query = String.format("SHOW TABLE STATUS IN %s;", dbName);
 			PreparedStatement stmt = conn.prepareStatement(query);
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next())
 			{
-				String tableName = rs.getString(1);
+				String tableName = rs.getString("Name");
+				Long rowCount = rs.getLong("Rows");
 				tableList.add(tableName);
+				tableCount.put(tableName.toLowerCase(), rowCount.longValue());
 			}
 		}
 		catch (SQLException e)
@@ -217,6 +223,38 @@ public class Server
 			tableCount.put(tableName.toLowerCase(), count);
 		}
 		return count;
+	}
+
+	public List<Integer> getNumRowAccessedByQuery(String sql)
+	{
+		ArrayList<Integer> results = new ArrayList<>();
+		int count = 0;
+		try
+		{
+			if (conn == null || conn.isClosed())
+			{
+				if (!this.testConnection())
+				{
+					// cannot connect... return -1
+					Log.error("No DB Connection.");
+					return null;
+				}
+			}
+			String query = String.format("EXPLAIN %s;", sql);
+			Statement stmt = conn.createStatement();
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next())
+			{
+				results.add(rs.getInt("rows"));
+//				count += rs.getInt("rows");
+			}
+		}
+		catch (SQLException e)
+		{
+			Log.debug("Caught a SQLException while getting the number of rows accessed for the query: " + sql);
+		}
+
+		return results;
 	}
 
     public boolean testMonitoringDir()

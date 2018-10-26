@@ -319,6 +319,21 @@ public class MiddlewareServer
 		}
 	}
 
+	public List<Integer> getNumRowAccessedByQuery(String serverName, String sql)
+	{
+		Server server = servers.get(serverName);
+
+		if (server == null)
+		{
+			Log.info("server null");
+			return null;
+		}
+		else
+		{
+			return server.getNumRowAccessedByQuery(sql);
+		}
+	}
+
 	public static void main(String[] args)
 	{
 		// set up logger
